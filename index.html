@@ -617,32 +617,6 @@ async function seedCloudData(){
   alert('Cloud-data initierad.');
 }
 
-function updateAdminView(){
-  document.querySelectorAll('.admin-locked').forEach(el => {
-    el.style.display = isAdmin ? (el.dataset.adminDisplay || 'block') : 'none';
-  });
-  document.getElementById('authStatus').textContent = isAdmin ? 'Adminläge aktivt' : 'Publikt läge';
-  document.getElementById('search').placeholder = isAdmin ? 'Sök plats, namn, e-post, telefon eller adress' : 'Sök plats eller namn';
-  if(selected) selectSlip(selected.place);
-}
-
-function adminLogin(){
-  if(document.getElementById('adminPassword').value === ADMIN_PASSWORD){
-    isAdmin = true;
-    localStorage.setItem(ADMIN_AUTH_KEY,'true');
-    document.getElementById('adminPassword').value = '';
-    updateAdminView();
-  }else{
-    alert('Fel lösenord.');
-  }
-}
-
-function adminLogout(){
-  isAdmin = false;
-  localStorage.removeItem(ADMIN_AUTH_KEY);
-  updateAdminView();
-}
-
 function escapeHtml(value){
   return String(value || '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch]));
 }
@@ -1051,38 +1025,6 @@ async function submitTermination(){
   document.getElementById('termFeedback').textContent = 'Uppsägningen är skickad och registrerad.';
 }
 
-function renderRequestList(list, containerId, type){
-  const container = document.getElementById(containerId);
-  if(!list.length){
-    container.innerHTML = '<div class="empty-state">Inga poster ännu.</div>';
-    return;
-  }
-  container.innerHTML = list.map(item => {
-    const statusClass = item.handled ? 'handled' : 'new';
-    const detailRows = type === 'application' ? [
-      ['Datum', formatDateSv(new Date(item.createdAt))],
-      ['Namn', item.name],
-      ['E-post', item.email],
-      ['Telefon', item.phone || '-'],
-      ['Adress', item.address || '-'],
-      ['Båttyp', item.boatType || '-'],
-      ['Längd', item.boatLength || '-'],
-      ['Bredd', item.boatWidth || '-'],
-      ['Övrigt', item.note || '-']
-    ] : [
-      ['Datum', formatDateSv(new Date(item.createdAt))],
-      ['Namn', item.name],
-      ['E-post', item.email],
-      ['Telefon', item.phone || '-'],
-      ['Båtplats', item.place || '-'],
-      ['Slutdatum', item.moveOutDate || '-'],
-      ['Meddelande', item.reason || '-']
-    ];
-    const actions = isAdmin ? `<div class="cta-row" style="margin-top:12px"><button type="button" class="${item.handled ? 'smallbtn' : 'greenbtn'}" onclick="${type === 'application' ? 'toggleApplicationHandled' : 'toggleTerminationHandled'}('${item.id}')">${item.handled ? 'Markera som ny' : 'Markera som hanterad'}</button></div>` : '';
-    return `<div class="request-item"><div class="request-item-head"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><b>${escapeHtml(item.name || '-')}</b><span class="status-pill ${statusClass}">${escapeHtml(item.handled ? 'Hanterad' : 'Ny')}</span></div></div><dl>${detailRows.map(row => `<dt>${escapeHtml(row[0])}</dt><dd>${escapeHtml(row[1])}</dd>`).join('')}</dl>${actions}</div>`;
-  }).join('');
-}
-
 function renderApplications(){renderRequestList(sortNewest(applications), 'applicationsList', 'application');}
 function renderTerminations(){renderRequestList(sortNewest(terminations), 'terminationsList', 'termination');}
 
@@ -1100,20 +1042,6 @@ async function toggleTerminationHandled(id){
   record.handled = !record.handled;
   record.status = record.handled ? 'Hanterad' : 'Ny';
   await saveTerminationRecord(record);
-}
-
-function runTests(){
-  console.assert(defaultSlips.some(s=>s.pier==='C'&&s.place===201),'Test: Brygga C ska innehålla plats 201');
-  console.assert(defaultSlips.some(s=>s.pier==='C'&&s.place===232),'Test: Brygga C ska innehålla plats 232');
-  console.assert(defaultSlips.filter(s=>s.pier==='C').length===32,'Test: Brygga C ska ha 32 platser');
-  console.assert(defaultSlips.find(s=>s.place===201).side==='Sida 1','Test: 201 ska vara på Sida 1');
-  console.assert(defaultSlips.find(s=>s.place===202).side==='Sida 2','Test: 202 ska vara på Sida 2');
-  console.assert(Object.prototype.hasOwnProperty.call(defaultSlips[0], 'phone'),'Test: båtplats ska ha telefonfält');
-  console.assert(buildInvoiceModel(defaultSlips[0], { amount:'1000 kr', due:'30' }).invoiceNumber.includes('MB'),'Test: fakturanummer ska skapas');
-  console.assert(applyInvoiceTemplate('Telefon {telefon}', Object.assign({}, defaultSlips[0], { phone:'0701234567' }), '1000 kr', '2026-06-30', 'MB-1', '2026-05-27').includes('0701234567'),'Test: fakturamall ska kunna skriva ut telefonnummer');
-  console.assert(Array.isArray(applications) && Array.isArray(terminations),'Test: ansökningar och uppsägningar ska vara listor');
-  const merged = cloneData(defaultSlips).map(base => Object.assign({}, base, new Map([[1,{place:1,name:'Test'}]]).get(Number(base.place)) || {}));
-  console.assert(merged.length === defaultSlips.length,'Test: cloud-data ska mergas med grundmallen');
 }
 
 function renderRequestList(list, containerId, type){
