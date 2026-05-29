@@ -155,6 +155,31 @@
     .invoice-table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px}
     .invoice-table th,.invoice-table td{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align:top}
     .invoice-table th{background:#f1f5f9;color:#334155}
+    .modal-backdrop{
+      position:fixed;
+      inset:0;
+      background:rgba(15,23,42,.48);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+      z-index:30;
+    }
+    .modal-backdrop.active{display:flex}
+    .slip-modal{
+      width:min(760px,100%);
+      max-height:92vh;
+      overflow:auto;
+      background:white;
+      border-radius:16px;
+      border:1px solid var(--line);
+      box-shadow:0 22px 70px rgba(15,23,42,.28);
+      padding:16px;
+    }
+    .modal-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;border-bottom:1px solid #e5e7eb;padding-bottom:10px;margin-bottom:12px}
+    .modal-head h2{margin:0;color:var(--blue)}
+    .modal-close{background:var(--muted);min-width:42px}
+    .modal-detail{line-height:1.5;margin-bottom:12px}
     .public-area,.admin-area{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
     .public-box p,.admin-box p{margin:0 0 8px}
     .request-list{display:grid;gap:10px}
@@ -278,27 +303,6 @@
           <div class="tag"><span class="box" style="background:#e5e7eb"></span>Ej tillgänglig</div>
         </div>
 
-        <div class="admin admin-locked" data-admin-display="grid">
-          <b>Ändra vald plats</b>
-          <input id="editName" placeholder="Hyresgäst">
-          <select id="editStatus">
-            <option>Uthyrd</option>
-            <option>Ledig</option>
-            <option>Gästplats</option>
-            <option>Okänd</option>
-            <option>Ej tillgänglig</option>
-          </select>
-          <input id="editEmail" placeholder="E-postadress för faktura">
-          <input id="editPhone" placeholder="Telefonnummer">
-          <input id="editAddress" placeholder="Adress">
-          <input id="editPostal" placeholder="Postnummer och ort">
-          <select id="editPaid">
-            <option value="false">Ej betald</option>
-            <option value="true">Faktura betald</option>
-          </select>
-          <input id="editNote" placeholder="Anteckning">
-          <button type="button" onclick="saveSelected()">Spara ändring</button>
-        </div>
       </aside>
     </div>
   </section>
@@ -400,6 +404,43 @@
     </section>
   </section>
 </main>
+
+<div id="slipModal" class="modal-backdrop" onclick="closeSlipModal(event)">
+  <section class="slip-modal" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <div>
+        <h2 id="modalTitle">Båtplats</h2>
+        <div id="modalPlaceMeta" class="muted"></div>
+      </div>
+      <button type="button" class="modal-close" onclick="closeSlipModal()">Stäng</button>
+    </div>
+    <div id="modalDetail" class="modal-detail"></div>
+    <div class="admin admin-locked" data-admin-display="grid">
+      <b>Ändra plats</b>
+      <input id="editName" placeholder="Hyresgäst">
+      <select id="editStatus">
+        <option>Uthyrd</option>
+        <option>Ledig</option>
+        <option>Gästplats</option>
+        <option>Okänd</option>
+        <option>Ej tillgänglig</option>
+      </select>
+      <input id="editEmail" placeholder="E-postadress för faktura">
+      <input id="editPhone" placeholder="Telefonnummer">
+      <input id="editAddress" placeholder="Adress">
+      <input id="editPostal" placeholder="Postnummer och ort">
+      <select id="editPaid">
+        <option value="false">Ej betald</option>
+        <option value="true">Faktura betald</option>
+      </select>
+      <input id="editNote" placeholder="Anteckning">
+      <div class="cta-row">
+        <button type="button" onclick="saveSelected()">Spara ändring</button>
+        <button type="button" class="smallbtn" onclick="closeSlipModal()">Klar</button>
+      </div>
+    </div>
+  </section>
+</div>
 
 <script type="module">
 'use strict';
@@ -562,7 +603,7 @@ function subscribeCloud(){
     });
     slips = cloneData(defaultSlips).map(base => Object.assign({email:'',phone:'',address:'',postal:'',paid:false,invoiceSent:false,note:''}, base, cloudByPlace.get(Number(base.place)) || {}));
     render();
-    if(selected) selectSlip(selected.place);
+    if(selected) selectSlip(selected.place, false);
   }, error => {
     console.error(error);
     document.getElementById('cloudStatus').textContent = 'Cloud fel - kontrollera Firestore-regler';
@@ -775,6 +816,9 @@ function clearSelection(){
   document.getElementById('pNo').textContent = '-';
   document.getElementById('pText').textContent = 'Klicka på en plats i kartan.';
   document.getElementById('detail').innerHTML = '';
+  document.getElementById('modalTitle').textContent = 'Båtplats';
+  document.getElementById('modalPlaceMeta').textContent = '';
+  document.getElementById('modalDetail').innerHTML = '';
   ['editName','editEmail','editPhone','editAddress','editPostal','editNote'].forEach(id => {
     const el = document.getElementById(id);
     if(el) el.value = '';
@@ -782,15 +826,23 @@ function clearSelection(){
   document.getElementById('editPaid').value = 'false';
 }
 
-function selectSlip(place){
+function closeSlipModal(event){
+  if(event && event.target !== document.getElementById('slipModal')) return;
+  document.getElementById('slipModal').classList.remove('active');
+}
+
+function selectSlip(place, openModal=true){
   const found = getSlipByPlace(place);
   if(!found){clearSelection();return;}
   selected = found;
+  const adminDetail = '<b>Hyresgäst:</b> ' + escapeHtml(selected.name || '-') + '<br><b>E-post:</b> ' + escapeHtml(selected.email || '-') + '<br><b>Telefon:</b> ' + escapeHtml(selected.phone || '-') + '<br><b>Adress:</b> ' + escapeHtml(selected.address || '-') + '<br><b>Post/ort:</b> ' + escapeHtml(selected.postal || '-') + '<br><b>Status:</b> ' + escapeHtml(selected.status) + '<br><b>Faktura:</b> ' + (selected.paid ? 'Betald' : 'Ej betald') + '<br><b>Faktura skickad:</b> ' + (selected.invoiceSent ? 'Ja' : 'Nej') + '<br><b>Anteckning:</b> ' + escapeHtml(selected.note || '-');
+  const publicDetail = '<b>Hyresgäst:</b> ' + escapeHtml(selected.name || '-') + '<br><b>Status:</b> ' + escapeHtml(selected.status);
   document.getElementById('pNo').textContent = selected.place;
   document.getElementById('pText').textContent = 'Brygga ' + selected.pier + ' - ' + selected.side;
-  document.getElementById('detail').innerHTML = isAdmin
-    ? '<b>Hyresgäst:</b> ' + escapeHtml(selected.name || '-') + '<br><b>E-post:</b> ' + escapeHtml(selected.email || '-') + '<br><b>Telefon:</b> ' + escapeHtml(selected.phone || '-') + '<br><b>Adress:</b> ' + escapeHtml(selected.address || '-') + '<br><b>Post/ort:</b> ' + escapeHtml(selected.postal || '-') + '<br><b>Status:</b> ' + escapeHtml(selected.status) + '<br><b>Faktura:</b> ' + (selected.paid ? 'Betald' : 'Ej betald') + '<br><b>Faktura skickad:</b> ' + (selected.invoiceSent ? 'Ja' : 'Nej') + '<br><b>Anteckning:</b> ' + escapeHtml(selected.note || '-')
-    : '<b>Hyresgäst:</b> ' + escapeHtml(selected.name || '-') + '<br><b>Status:</b> ' + escapeHtml(selected.status);
+  document.getElementById('detail').innerHTML = isAdmin ? adminDetail : publicDetail;
+  document.getElementById('modalTitle').textContent = 'Båtplats ' + selected.place;
+  document.getElementById('modalPlaceMeta').textContent = 'Brygga ' + selected.pier + ' - ' + selected.side;
+  document.getElementById('modalDetail').innerHTML = isAdmin ? adminDetail : publicDetail;
   document.getElementById('editName').value = selected.name || '';
   document.getElementById('editStatus').value = selected.status;
   document.getElementById('editEmail').value = selected.email || '';
@@ -799,6 +851,7 @@ function selectSlip(place){
   document.getElementById('editPostal').value = selected.postal || '';
   document.getElementById('editPaid').value = String(Boolean(selected.paid));
   document.getElementById('editNote').value = selected.note || '';
+  if(openModal) document.getElementById('slipModal').classList.add('active');
 }
 
 async function saveSelected(){
@@ -813,7 +866,7 @@ async function saveSelected(){
   selected.paid = document.getElementById('editPaid').value === 'true';
   selected.note = document.getElementById('editNote').value.trim();
   await saveSlip(cleanSlipForSave(selected));
-  if(!cloudEnabled) selectSlip(selected.place);
+  selectSlip(selected.place, false);
 }
 
 function fillInvoiceForm(){
@@ -996,7 +1049,7 @@ async function markInvoiceSent(model){
   selected.invoiceSent = true;
   selected.note = selected.note || '';
   await saveSlip(selected);
-  if(!cloudEnabled) selectSlip(selected.place);
+  if(!cloudEnabled) selectSlip(selected.place, false);
 }
 
 async function createInvoicePdf(){
@@ -1421,7 +1474,7 @@ async function assignApplicationSlip(id, place){
   record.status = 'Tilldelad';
   await saveApplicationRecord(record);
   selected = updatedSlip;
-  selectSlip(updatedSlip.place);
+  selectSlip(updatedSlip.place, false);
 }
 
 function emailApplicationAssignment(id){
@@ -1501,7 +1554,7 @@ async function releaseTerminationSlip(id){
   record.status = shouldReleaseNow ? 'Friställd' : `Friställs ${date}`;
   await saveTerminationRecord(record);
   selected = updatedSlip;
-  selectSlip(updatedSlip.place);
+  selectSlip(updatedSlip.place, false);
 }
 
 function runTests(){
@@ -1518,6 +1571,7 @@ function runTests(){
   console.assert(parseAmountNumber('2 500 kr') === 2500,'Test: belopp ska kunna läsas för bokföringsunderlag');
   console.assert(typeof renderBulkInvoiceTable([]) === 'string','Test: massfakturering ska kunna förhandsvisas');
   console.assert(typeof bulkInvoiceEmailBody(buildInvoiceModel(defaultSlips[0], {amount:'1000 kr', due:'30'})) === 'string','Test: massfakturor ska kunna mailas');
+  console.assert(typeof closeSlipModal === 'function','Test: platsruta ska kunna stängas');
   console.assert(cleanSlipForSave({place:1,name:'Test'}).pier === 'A','Test: sparad plats ska behålla brygga från grundmallen');
   console.assert(Array.isArray(availableSlips()),'Test: lediga platser ska kunna rekommenderas');
   console.assert(Array.isArray(applications) && Array.isArray(terminations),'Test: ansökningar och uppsägningar ska vara listor');
@@ -1533,7 +1587,7 @@ function updateAdminView(){
   const passwordConfigured = Boolean(localStorage.getItem(ADMIN_PASSWORD_KEY));
   document.getElementById('authStatus').textContent = isAdmin ? 'Adminläge aktivt' : (passwordConfigured ? 'Publikt läge' : 'Admin ej konfigurerad');
   document.getElementById('search').placeholder = isAdmin ? 'Sök plats, namn, e-post, telefon eller adress' : 'Sök plats eller namn';
-  if(selected) selectSlip(selected.place);
+  if(selected) selectSlip(selected.place, false);
 }
 
 function adminLogin(){
@@ -1588,6 +1642,7 @@ Object.assign(window, {
   adminLogin,
   adminLogout,
   setActivePage,
+  closeSlipModal,
   saveSelected,
   sendInvoiceEmail,
   createInvoicePdf,
