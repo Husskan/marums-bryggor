@@ -1107,7 +1107,8 @@ function parseAmountNumber(value){
 }
 
 function mailtoHref(draft){
-  return 'mailto:' + encodeURIComponent(draft.to) + '?subject=' + encodeURIComponent(draft.subject || '') + '&body=' + encodeURIComponent(draft.body || '');
+  const to = String(draft.to || '').trim().replace(/\s+/g, '');
+  return 'mailto:' + to + '?subject=' + encodeURIComponent(draft.subject || '') + '&body=' + encodeURIComponent(draft.body || '');
 }
 
 function showMailDrafts(drafts, title='Mail att skicka'){
@@ -1129,8 +1130,10 @@ function showMailDrafts(drafts, title='Mail att skicka'){
   return true;
 }
 
-function openMailDraft(to, subject, body, label='Mailutkast'){
-  return showMailDrafts([{to, subject, body, label}], label);
+function openMailDraft(to, subject, body, label='Mailutkast', autoOpen=false){
+  const opened = showMailDrafts([{to, subject, body, label}], label);
+  if(opened && autoOpen) openMailDraftLink(0);
+  return opened;
 }
 
 function openMailDrafts(drafts, title='Mail att skicka'){
@@ -1140,12 +1143,7 @@ function openMailDrafts(drafts, title='Mail att skicka'){
 function openMailDraftLink(index){
   const draft = mailDrafts[index];
   if(!draft) return;
-  const link = document.createElement('a');
-  link.href = mailtoHref(draft);
-  link.style.display = 'none';
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
+  window.location.href = mailtoHref(draft);
 }
 
 async function copyMailDraft(index){
@@ -1907,7 +1905,7 @@ function emailApplicationAssignment(id){
     'Vänliga hälsningar',
     invoiceSettings.sender || 'Marums samfällighet'
   ].join('\n');
-  openMailDraft(record.email, subject, body);
+  openMailDraft(record.email, subject, body, 'Maila tilldelning', true);
 }
 
 async function assignAndEmailApplication(id){
@@ -1995,6 +1993,7 @@ function runTests(){
   console.assert(typeof inboxNewCount === 'function','Test: inkommet-fliken ska kunna räkna nya ärenden');
   console.assert(typeof deleteHandledApplications === 'function','Test: hanterade ansökningar ska kunna raderas samlat');
   console.assert(typeof assignAndEmailApplication === 'function','Test: ansökan ska kunna tilldelas och mailas direkt');
+  console.assert(mailtoHref({to:'test@example.com', subject:'Hej', body:'Text'}).startsWith('mailto:test@example.com?'),'Test: mailto ska behålla e-postadressen läsbar');
   console.assert(parseAmountNumber('2 500 kr') === 2500,'Test: belopp ska kunna läsas för bokföringsunderlag');
   console.assert(typeof renderBulkInvoiceTable([]) === 'string','Test: massfakturering ska kunna förhandsvisas');
   console.assert(typeof bulkInvoiceEmailBody(buildInvoiceModel(defaultSlips[0], {amount:'1000 kr', due:'30'})) === 'string','Test: massfakturor ska kunna mailas');
