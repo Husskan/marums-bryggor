@@ -152,6 +152,9 @@
     .invoice-lines{margin-top:8px}
     .invoice-line{display:grid;grid-template-columns:1.5fr .8fr .6fr;gap:10px;padding:8px 0;border-bottom:1px solid #e5e7eb}
     .invoice-total{display:flex;justify-content:space-between;align-items:center;padding-top:10px;font-size:16px;font-weight:bold}
+    .invoice-table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px}
+    .invoice-table th,.invoice-table td{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left;vertical-align:top}
+    .invoice-table th{background:#f1f5f9;color:#334155}
     .public-area,.admin-area{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
     .public-box p,.admin-box p{margin:0 0 8px}
     .request-list{display:grid;gap:10px}
@@ -326,6 +329,24 @@
       </div>
     </div>
     <div class="invoice-preview" id="invoicePreview">Ingen förhandsvisning ännu.</div>
+
+    <div class="invoice-preview">
+      <h3>Massfakturering årsavgift</h3>
+      <p class="muted">Skapa årsavgift för alla uthyrda båtplatser. Förhandsvisa först, skriv sedan ut fakturor eller exportera underlag för bokföring.</p>
+      <div class="invoice-grid">
+        <input id="bulkYear" placeholder="Avgiftsår, t.ex. 2026">
+        <input id="bulkAmount" placeholder="Årsavgift, t.ex. 2500 kr">
+        <input id="bulkDue" placeholder="Förfallotid i dagar, t.ex. 30">
+        <label class="tag"><input id="bulkOnlyUnsent" type="checkbox" style="width:auto"> Endast platser utan skickad faktura</label>
+        <div class="full cta-row">
+          <button type="button" class="smallbtn" onclick="previewBulkInvoices()">Förhandsvisa årsavgifter</button>
+          <button type="button" class="greenbtn" onclick="printBulkInvoices()">Skriv ut fakturor</button>
+          <button type="button" class="smallbtn" onclick="downloadBulkInvoiceCsv()">Exportera bokföringslista</button>
+          <button type="button" class="smallbtn" onclick="markBulkInvoicesSent()">Markera som fakturerade</button>
+        </div>
+      </div>
+      <div id="bulkInvoicePreview" class="fineprint">Ingen massfakturering förhandsvisad.</div>
+    </div>
   </section>
 
   <section id="page-application" class="page page-stack">
@@ -805,6 +826,9 @@ function fillInvoiceForm(){
   document.getElementById('invSubject').value = invoiceSettings.subject || '';
   document.getElementById('invReferencePrefix').value = invoiceSettings.referencePrefix || '';
   document.getElementById('invText').value = invoiceSettings.text || '';
+  document.getElementById('bulkYear').value = new Date().getFullYear();
+  document.getElementById('bulkAmount').value = invoiceSettings.amount || '';
+  document.getElementById('bulkDue').value = invoiceSettings.due || '30';
 }
 
 async function saveInvoiceSettings(){
@@ -866,6 +890,12 @@ function applyInvoiceTemplate(template, slip, amount, dueDate, invoiceNumber, is
 
 function buildInvoiceText(model){
   return applyInvoiceTemplate(invoiceSettings.text, model.slip, model.amount, model.dueDateSv, model.invoiceNumber, model.issueDateSv);
+}
+
+function parseAmountNumber(value){
+  const normalized = String(value || '').replace(/\s/g,'').replace(/[^\d,.-]/g,'').replace(',', '.');
+  const amount = Number(normalized);
+  return Number.isFinite(amount) ? amount : 0;
 }
 
 function openMailDraft(to, subject, body){
@@ -1002,6 +1032,122 @@ function downloadInvoiceCsv(){
   a.href = URL.createObjectURL(blob);
   a.download = 'fakturalista-marums-bryggor.csv';
   a.click();
+}
+
+function getBulkInvoiceOptions(){
+  const year = (document.getElementById('bulkYear').value || String(new Date().getFullYear())).trim();
+  const amount = (document.getElementById('bulkAmount').value || document.getElementById('invAmount').value || invoiceSettings.amount || '').trim();
+  const due = (document.getElementById('bulkDue').value || document.getElementById('invDue').value || invoiceSettings.due || '30').trim();
+  const onlyUnsent = document.getElementById('bulkOnlyUnsent').checked;
+  if(!amount){alert('Ange årsavgift först.');return null;}
+  return {year, amount, due, onlyUnsent};
+}
+
+function bulkInvoiceSlips(options){
+  return slips
+    .filter(s => s.status === 'Uthyrd' && s.name)
+    .filter(s => !options.onlyUnsent || !s.invoiceSent)
+    .slice()
+    .sort((a,b) => String(a.pier).localeCompare(String(b.pier)) || Number(a.place) - Number(b.place));
+}
+
+function buildBulkInvoiceModels(){
+  if(!isAdmin){alert('Logga in som administratör först.');return [];}
+  const options = getBulkInvoiceOptions();
+  if(!options) return [];
+  const issueDate = new Date();
+  return bulkInvoiceSlips(options).map(slip => {
+    const model = buildInvoiceModel(slip, {amount:options.amount, due:options.due, issueDate});
+    model.year = options.year;
+    model.amountNumber = parseAmountNumber(options.amount);
+    return model;
+  });
+}
+
+function renderBulkInvoiceTable(models){
+  const total = models.reduce((sum, model) => sum + model.amountNumber, 0);
+  if(!models.length) return '<div class="empty-state">Inga uthyrda platser matchar urvalet.</div>';
+  return [
+    `<p><b>${models.length}</b> fakturor för årsavgift ${escapeHtml(models[0].year)}. Summa: <b>${escapeHtml(String(total.toLocaleString('sv-SE')))} kr</b></p>`,
+    '<table class="invoice-table"><thead><tr><th>Faktura</th><th>Brygga</th><th>Plats</th><th>Namn</th><th>E-post</th><th>Belopp</th></tr></thead><tbody>',
+    models.map(model => `<tr><td>${escapeHtml(model.invoiceNumber)}</td><td>${escapeHtml(model.slip.pier)}</td><td>${escapeHtml(String(model.slip.place))}</td><td>${escapeHtml(model.slip.name || '-')}</td><td>${escapeHtml(model.slip.email || '-')}</td><td>${escapeHtml(model.amount)}</td></tr>`).join(''),
+    '</tbody></table>'
+  ].join('');
+}
+
+function previewBulkInvoices(){
+  const models = buildBulkInvoiceModels();
+  document.getElementById('bulkInvoicePreview').innerHTML = renderBulkInvoiceTable(models);
+}
+
+function openBulkInvoicePrintView(models){
+  const win = window.open('', '_blank', 'width=1100,height=900');
+  if(!win){alert('Webbläsaren blockerade fakturafönstret. Tillåt popup-fönster och försök igen.');return;}
+  const total = models.reduce((sum, model) => sum + model.amountNumber, 0);
+  const rows = models.map(model => `<tr><td>${escapeHtml(model.invoiceNumber)}</td><td>${escapeHtml(model.slip.pier)}</td><td>${escapeHtml(String(model.slip.place))}</td><td>${escapeHtml(model.slip.name || '')}</td><td>${escapeHtml(model.amount)}</td></tr>`).join('');
+  const invoices = models.map(model => `<section class="sheet"><div class="muted">Marums bryggor</div><h1>Faktura årsavgift ${escapeHtml(model.year)}</h1>${renderInvoicePreview(model)}</section>`).join('');
+  const styles = `
+    <style>
+      body{font-family:Arial,Helvetica,sans-serif;background:#eef4f8;margin:0;padding:22px;color:#1f2937}
+      .sheet{max-width:900px;margin:0 auto 22px;background:white;border-radius:18px;padding:28px;box-shadow:0 16px 46px rgba(15,23,42,.14);page-break-after:always}
+      .summary{max-width:1000px}
+      .muted{color:#64748b}
+      h1{margin:0 0 10px;font-size:28px;color:#145c96}
+      h2{margin:0 0 12px;font-size:22px;color:#145c96}
+      table{width:100%;border-collapse:collapse;font-size:13px}
+      th,td{border-bottom:1px solid #dbe2ea;padding:8px;text-align:left}
+      th{background:#f1f5f9}
+      .invoice-preview-header,.invoice-meta,.invoice-lines{display:grid;gap:12px}
+      .invoice-preview-header{grid-template-columns:1.3fr .8fr;margin:18px 0}
+      .invoice-meta{grid-template-columns:repeat(3,minmax(0,1fr));margin-bottom:14px}
+      .invoice-brand,.invoice-kpi,.invoice-card{padding:14px;border-radius:14px;border:1px solid #dde6ef}
+      .invoice-line{display:grid;grid-template-columns:1.5fr .8fr .6fr;gap:12px;padding:12px 0;border-bottom:1px solid #e5e7eb}
+      .invoice-total{display:flex;justify-content:space-between;align-items:center;padding-top:14px;font-size:20px;font-weight:bold}
+      @media print{
+        body{background:white;padding:0}
+        .sheet{box-shadow:none;border-radius:0;max-width:none;padding:16mm;margin:0}
+      }
+    </style>
+  `;
+  win.document.open();
+  win.document.write(`<!DOCTYPE html><html lang="sv"><head><meta charset="UTF-8"><title>Massfakturering ${escapeHtml(models[0].year)}</title>${styles}</head><body><section class="sheet summary"><h1>Bokföringsunderlag årsavgifter ${escapeHtml(models[0].year)}</h1><p>Antal fakturor: <b>${models.length}</b><br>Summa: <b>${escapeHtml(String(total.toLocaleString('sv-SE')))} kr</b></p><table><thead><tr><th>Faktura</th><th>Brygga</th><th>Plats</th><th>Namn</th><th>Belopp</th></tr></thead><tbody>${rows}</tbody></table></section>${invoices}<script>window.onload=function(){window.print();};<\/script></body></html>`);
+  win.document.close();
+}
+
+function printBulkInvoices(){
+  const models = buildBulkInvoiceModels();
+  if(!models.length){previewBulkInvoices();return;}
+  document.getElementById('bulkInvoicePreview').innerHTML = renderBulkInvoiceTable(models);
+  openBulkInvoicePrintView(models);
+}
+
+function downloadBulkInvoiceCsv(){
+  const models = buildBulkInvoiceModels();
+  if(!models.length){previewBulkInvoices();return;}
+  const rows = [['Fakturanummer','År','Fakturadatum','Förfallodatum','Brygga','Plats','Namn','E-post','Belopp','Bankgiro','Swish']];
+  models.forEach(model => rows.push([model.invoiceNumber,model.year,model.issueDateSv,model.dueDateSv,model.slip.pier,model.slip.place,model.slip.name||'',model.slip.email||'',model.amount,model.bankgiro,model.swish]));
+  const csv = rows.map(row => row.map(cell => '"' + String(cell).replace(/"/g,'""') + '"').join(';')).join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type:'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `bokforing-arsavgifter-${models[0].year}.csv`;
+  a.click();
+}
+
+async function markBulkInvoicesSent(){
+  const models = buildBulkInvoiceModels();
+  if(!models.length){previewBulkInvoices();return;}
+  if(!confirm(`Markera ${models.length} fakturor som skickade?`)) return;
+  for(const model of models){
+    const slip = getSlipByPlace(model.slip.place);
+    if(slip){
+      slip.invoiceSent = true;
+      slip.paid = false;
+      await saveSlip(cleanSlipForSave(slip));
+    }
+  }
+  document.getElementById('bulkInvoicePreview').innerHTML = renderBulkInvoiceTable(models);
+  render();
 }
 
 function downloadData(){
@@ -1317,6 +1463,8 @@ function runTests(){
   console.assert(applyInvoiceTemplate('Telefon {telefon}', Object.assign({}, defaultSlips[0], { phone:'0701234567' }), '1000 kr', '2026-06-30', 'MB-1', '2026-05-27').includes('0701234567'),'Test: fakturamall ska kunna skriva ut telefonnummer');
   console.assert(Object.prototype.hasOwnProperty.call(defaultInvoiceSettings(), 'harborMasterEmail'),'Test: hamnkaptenens e-post ska kunna sparas');
   console.assert(applicationMailBody({name:'Test', email:'test@example.com'}).includes('test@example.com'),'Test: ansökningsmail ska innehålla e-post');
+  console.assert(parseAmountNumber('2 500 kr') === 2500,'Test: belopp ska kunna läsas för bokföringsunderlag');
+  console.assert(typeof renderBulkInvoiceTable([]) === 'string','Test: massfakturering ska kunna förhandsvisas');
   console.assert(cleanSlipForSave({place:1,name:'Test'}).pier === 'A','Test: sparad plats ska behålla brygga från grundmallen');
   console.assert(Array.isArray(availableSlips()),'Test: lediga platser ska kunna rekommenderas');
   console.assert(Array.isArray(applications) && Array.isArray(terminations),'Test: ansökningar och uppsägningar ska vara listor');
@@ -1390,6 +1538,10 @@ Object.assign(window, {
   saveSelected,
   sendInvoiceEmail,
   createInvoicePdf,
+  previewBulkInvoices,
+  printBulkInvoices,
+  downloadBulkInvoiceCsv,
+  markBulkInvoicesSent,
   downloadInvoiceCsv,
   downloadData,
   resetData,
