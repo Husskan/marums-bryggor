@@ -131,8 +131,8 @@
     .box{width:18px;height:18px;border-radius:4px;border:1px solid #94a3b8}
     .admin{margin-top:10px;border-top:1px solid #e5e7eb;padding-top:10px}
     .admin-locked{display:none}
-    button{padding:9px 12px;border:0;border-radius:9px;background:var(--blue);color:white;font-weight:bold;cursor:pointer;font-size:13px}
-    button:hover{filter:brightness(.97)}
+    button,.linkbtn{padding:9px 12px;border:0;border-radius:9px;background:var(--blue);color:white;font-weight:bold;cursor:pointer;font-size:13px;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+    button:hover,.linkbtn:hover{filter:brightness(.97)}
     .smallbtn{background:var(--muted)}
     .greenbtn{background:var(--ok)}
     .danger{background:var(--danger)}
@@ -1125,8 +1125,8 @@ function showMailDrafts(drafts, title='Mail att skicka'){
       <h3>${escapeHtml(draft.label || `Mail ${index + 1}`)}</h3>
       <div class="mail-copy"><b>Till</b><span>${escapeHtml(draft.to)}</span><b>Ämne</b><span>${escapeHtml(draft.subject || '')}</span></div>
       <div class="cta-row">
-        <button type="button" class="greenbtn" onclick="openOutlookDraftLink(${index})">Öppna i Outlook</button>
-        <button type="button" class="smallbtn" onclick="openMailDraftLink(${index})">Öppna i mailprogram</button>
+        <a class="linkbtn greenbtn" target="_blank" rel="noopener" href="${escapeAttr(outlookHref(draft))}">Öppna i Outlook</a>
+        <a class="linkbtn smallbtn" href="${escapeAttr(mailtoHref(draft))}">Öppna i mailprogram</a>
         <button type="button" class="smallbtn" onclick="copyMailDraft(${index})">Kopiera text</button>
       </div>
       <textarea readonly>${escapeHtml(draft.body || '')}</textarea>
@@ -1155,7 +1155,14 @@ function openMailDraftLink(index){
 function openOutlookDraftLink(index){
   const draft = mailDrafts[index];
   if(!draft) return;
-  window.open(outlookHref(draft), '_blank', 'noopener');
+  const link = document.createElement('a');
+  link.href = outlookHref(draft);
+  link.target = '_blank';
+  link.rel = 'noopener';
+  link.style.display = 'none';
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
 }
 
 async function copyMailDraft(index){
