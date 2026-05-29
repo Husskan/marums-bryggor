@@ -1106,6 +1106,11 @@ function parseAmountNumber(value){
   return Number.isFinite(amount) ? amount : 0;
 }
 
+function outlookHref(draft){
+  const to = String(draft.to || '').trim().replace(/\s+/g, '');
+  return 'https://outlook.office.com/mail/deeplink/compose?to=' + encodeURIComponent(to) + '&subject=' + encodeURIComponent(draft.subject || '') + '&body=' + encodeURIComponent(draft.body || '');
+}
+
 function mailtoHref(draft){
   const to = String(draft.to || '').trim().replace(/\s+/g, '');
   return 'mailto:' + to + '?subject=' + encodeURIComponent(draft.subject || '') + '&body=' + encodeURIComponent(draft.body || '');
@@ -1120,7 +1125,8 @@ function showMailDrafts(drafts, title='Mail att skicka'){
       <h3>${escapeHtml(draft.label || `Mail ${index + 1}`)}</h3>
       <div class="mail-copy"><b>Till</b><span>${escapeHtml(draft.to)}</span><b>Ämne</b><span>${escapeHtml(draft.subject || '')}</span></div>
       <div class="cta-row">
-        <button type="button" class="greenbtn" onclick="openMailDraftLink(${index})">Öppna mail</button>
+        <button type="button" class="greenbtn" onclick="openOutlookDraftLink(${index})">Öppna i Outlook</button>
+        <button type="button" class="smallbtn" onclick="openMailDraftLink(${index})">Öppna i mailprogram</button>
         <button type="button" class="smallbtn" onclick="copyMailDraft(${index})">Kopiera text</button>
       </div>
       <textarea readonly>${escapeHtml(draft.body || '')}</textarea>
@@ -1132,7 +1138,7 @@ function showMailDrafts(drafts, title='Mail att skicka'){
 
 function openMailDraft(to, subject, body, label='Mailutkast', autoOpen=false){
   const opened = showMailDrafts([{to, subject, body, label}], label);
-  if(opened && autoOpen) openMailDraftLink(0);
+  if(opened && autoOpen) openOutlookDraftLink(0);
   return opened;
 }
 
@@ -1144,6 +1150,12 @@ function openMailDraftLink(index){
   const draft = mailDrafts[index];
   if(!draft) return;
   window.location.href = mailtoHref(draft);
+}
+
+function openOutlookDraftLink(index){
+  const draft = mailDrafts[index];
+  if(!draft) return;
+  window.open(outlookHref(draft), '_blank', 'noopener');
 }
 
 async function copyMailDraft(index){
@@ -1473,8 +1485,8 @@ function openBulkInvoiceEmailView(models){
   if(!win){alert('Webbläsaren blockerade utskicksfönstret. Tillåt popup-fönster och försök igen.');return;}
   const rows = models.map(model => {
     const missingEmail = !model.slip.email;
-    const href = missingEmail ? '#' : 'mailto:' + encodeURIComponent(model.slip.email) + '?subject=' + encodeURIComponent(bulkInvoiceEmailSubject(model)) + '&body=' + encodeURIComponent(bulkInvoiceEmailBody(model));
-    const button = missingEmail ? '<span class="missing">Saknar e-post</span>' : `<a class="mailbtn" href="${escapeAttr(href)}">Öppna mail</a>`;
+    const href = missingEmail ? '#' : outlookHref({to:model.slip.email, subject:bulkInvoiceEmailSubject(model), body:bulkInvoiceEmailBody(model)});
+    const button = missingEmail ? '<span class="missing">Saknar e-post</span>' : `<a class="mailbtn" target="_blank" rel="noopener" href="${escapeAttr(href)}">Öppna i Outlook</a>`;
     return `<tr><td>${button}</td><td>${escapeHtml(model.invoiceNumber)}</td><td>${escapeHtml(model.slip.pier)}</td><td>${escapeHtml(String(model.slip.place))}</td><td>${escapeHtml(model.slip.name || '')}</td><td>${escapeHtml(model.slip.email || '-')}</td><td>${escapeHtml(model.amount)}</td></tr>`;
   }).join('');
   const styles = `
@@ -1491,7 +1503,7 @@ function openBulkInvoiceEmailView(models){
     </style>
   `;
   win.document.open();
-  win.document.write(`<!DOCTYPE html><html lang="sv"><head><meta charset="UTF-8"><title>Skicka årsavgifter ${escapeHtml(models[0].year)}</title>${styles}</head><body><section class="sheet"><h1>Skicka fakturor via e-post</h1><p>Klicka på <b>Öppna mail</b> för varje kund. Varje mail får egen mottagare, ämne och fakturatext.</p><table><thead><tr><th>Skicka</th><th>Faktura</th><th>Brygga</th><th>Plats</th><th>Namn</th><th>E-post</th><th>Belopp</th></tr></thead><tbody>${rows}</tbody></table></section></body></html>`);
+  win.document.write(`<!DOCTYPE html><html lang="sv"><head><meta charset="UTF-8"><title>Skicka årsavgifter ${escapeHtml(models[0].year)}</title>${styles}</head><body><section class="sheet"><h1>Skicka fakturor via Outlook</h1><p>Klicka på <b>Öppna i Outlook</b> för varje kund. Varje mail får egen mottagare, ämne och fakturatext.</p><table><thead><tr><th>Skicka</th><th>Faktura</th><th>Brygga</th><th>Plats</th><th>Namn</th><th>E-post</th><th>Belopp</th></tr></thead><tbody>${rows}</tbody></table></section></body></html>`);
   win.document.close();
 }
 
@@ -1993,6 +2005,7 @@ function runTests(){
   console.assert(typeof inboxNewCount === 'function','Test: inkommet-fliken ska kunna räkna nya ärenden');
   console.assert(typeof deleteHandledApplications === 'function','Test: hanterade ansökningar ska kunna raderas samlat');
   console.assert(typeof assignAndEmailApplication === 'function','Test: ansökan ska kunna tilldelas och mailas direkt');
+  console.assert(outlookHref({to:'test@example.com', subject:'Hej', body:'Text'}).startsWith('https://outlook.office.com/mail/deeplink/compose?'),'Test: Outlook-länk ska kunna skapas');
   console.assert(mailtoHref({to:'test@example.com', subject:'Hej', body:'Text'}).startsWith('mailto:test@example.com?'),'Test: mailto ska behålla e-postadressen läsbar');
   console.assert(parseAmountNumber('2 500 kr') === 2500,'Test: belopp ska kunna läsas för bokföringsunderlag');
   console.assert(typeof renderBulkInvoiceTable([]) === 'string','Test: massfakturering ska kunna förhandsvisas');
@@ -2064,6 +2077,7 @@ Object.assign(window, {
   closeSlipModal,
   closeMailModal,
   openMailDraftLink,
+  openOutlookDraftLink,
   copyMailDraft,
   saveSelected,
   clearInvoiceMarker,
