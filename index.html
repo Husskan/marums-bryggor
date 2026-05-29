@@ -411,6 +411,10 @@
     <section class="admin-box">
       <h2>Inkomna ansökningar</h2>
       <p class="muted">Här hamnar ansökningar när kunder fyller i formuläret.</p>
+      <div class="cta-row" style="margin-bottom:12px">
+        <button type="button" class="smallbtn" onclick="renderApplications()">Uppdatera lista</button>
+        <button type="button" class="danger" onclick="deleteHandledApplications()">Radera hanterade ansökningar</button>
+      </div>
       <div id="applicationsList" class="request-list"></div>
     </section>
     <section class="admin-box">
@@ -1723,10 +1727,16 @@ function renderRequestList(list, containerId, type){
     container.innerHTML = '<div class="empty-state">Inga poster än så länge.</div>';
     return;
   }
-  const recommendation = recommendedSlipForApplication();
-  const freeOptions = availableSlips().map(s => `<option value="${escapeAttr(s.place)}">${escapeHtml(s.place)} - Brygga ${escapeHtml(s.pier)} (${escapeHtml(s.status)})</option>`).join('');
+  const freeSlips = availableSlips();
   container.innerHTML = list.map(item => {
     const statusClass = item.handled ? 'handled' : 'new';
+    const recommendation = type === 'application' ? freeSlips[0] : null;
+    const selectedPlace = String(item.assignedPlace || (recommendation ? recommendation.place : ''));
+    const freeOptions = freeSlips.map(s => {
+      const isSelected = String(s.place) === selectedPlace;
+      const label = `${s.place} - Brygga ${s.pier} (${s.status})${recommendation && Number(recommendation.place) === Number(s.place) ? ' - rekommenderad' : ''}`;
+      return `<option value="${escapeAttr(s.place)}" ${isSelected ? 'selected' : ''}>${escapeHtml(label)}</option>`;
+    }).join('');
     const detailRows = type === 'application' ? [
       ['Datum', formatDateSv(new Date(item.createdAt))],
       ['Namn', item.name],
@@ -1757,10 +1767,12 @@ function renderRequestList(list, containerId, type){
             <option value="">Välj ledig plats</option>
             ${freeOptions}
           </select>
-          <button type="button" class="greenbtn" onclick="assignApplicationSlip('${escapeAttr(item.id)}')">Tilldela plats</button>
+          <button type="button" class="greenbtn" onclick="assignApplicationSlip('${escapeAttr(item.id)}')">Tilldela vald plats</button>
+          <button type="button" class="greenbtn" onclick="assignAndEmailApplication('${escapeAttr(item.id)}')">Tilldela och maila</button>
         </div>
         <div class="cta-row">
           <button type="button" class="smallbtn" onclick="assignApplicationSlip('${escapeAttr(item.id)}','${escapeAttr(item.assignedPlace || (recommendation ? recommendation.place : ''))}')">Använd rekommenderad plats</button>
+          <button type="button" class="smallbtn" onclick="emailApplicationConfirmation('${escapeAttr(item.id)}')">Bekräfta ansökan</button>
           <button type="button" class="smallbtn" onclick="emailApplicationAssignment('${escapeAttr(item.id)}')">Maila tilldelning</button>
           <button type="button" class="${item.handled ? 'smallbtn' : 'greenbtn'}" onclick="toggleApplicationHandled('${escapeAttr(item.id)}')">${item.handled ? 'Markera som ny' : 'Markera som hanterad'}</button>
           <button type="button" class="danger" onclick="deleteApplication('${escapeAttr(item.id)}')">Radera</button>
@@ -1791,6 +1803,17 @@ async function deleteApplication(id){
   await deleteApplicationRecord(id);
 }
 
+async function deleteHandledApplications(){
+  if(!isAdmin){alert('Logga in som administratör först.');return;}
+  const handled = applications.filter(item => item.handled);
+  if(!handled.length){alert('Det finns inga hanterade ansökningar att radera.');return;}
+  if(!confirm(`Radera ${handled.length} hanterade ansökningar?`)) return;
+  for(const record of handled){
+    await deleteApplicationRecord(record.id);
+  }
+  renderApplications();
+}
+
 async function deleteTermination(id){
   if(!isAdmin){alert('Logga in som administratör först.');return;}
   const record = terminations.find(item => item.id === id);
@@ -1800,13 +1823,13 @@ async function deleteTermination(id){
 }
 
 async function assignApplicationSlip(id, place){
-  if(!isAdmin){alert('Logga in som administratör först.');return;}
+  if(!isAdmin){alert('Logga in som administratör först.');return false;}
   const record = applications.find(item => item.id === id);
-  if(!record) return;
+  if(!record) return false;
   const selectedPlace = place || document.getElementById(`assign-${id}`)?.value;
   const slip = getSlipByPlace(selectedPlace);
-  if(!slip){alert('Välj en ledig båtplats först.');return;}
-  if(!['Ledig','Okänd'].includes(slip.status) && !confirm(`Plats ${slip.place} är markerad som ${slip.status}. Vill du tilldela den ändå?`)) return;
+  if(!slip){alert('Välj en ledig båtplats först.');return false;}
+  if(!['Ledig','Okänd'].includes(slip.status) && !confirm(`Plats ${slip.place} är markerad som ${slip.status}. Vill du tilldela den ändå?`)) return false;
   const updatedSlip = cleanSlipForSave(Object.assign({}, slip, {
     name:record.name || slip.name || '',
     email:record.email || slip.email || '',
@@ -1826,6 +1849,16 @@ async function assignApplicationSlip(id, place){
   await saveApplicationRecord(record);
   selected = updatedSlip;
   selectSlip(updatedSlip.place, false);
+  renderApplications();
+  return true;
+}
+
+function emailApplicationConfirmation(id){
+  if(!isAdmin){alert('Logga in som administratör först.');return;}
+  const record = applications.find(item => item.id === id);
+  if(!record) return;
+  if(!record.email){alert('Det saknas e-postadress på ansökan.');return;}
+  openMailDraft(record.email, 'Vi har tagit emot din båtplatsansökan - Marums bryggor', applicationConfirmationBody(record), 'Bekräftelse till kund');
 }
 
 function emailApplicationAssignment(id){
@@ -1848,6 +1881,11 @@ function emailApplicationAssignment(id){
     invoiceSettings.sender || 'Marums samfällighet'
   ].join('\n');
   openMailDraft(record.email, subject, body);
+}
+
+async function assignAndEmailApplication(id){
+  const assigned = await assignApplicationSlip(id);
+  if(assigned) emailApplicationAssignment(id);
 }
 
 function emailTerminationConfirmation(id){
@@ -1928,6 +1966,8 @@ function runTests(){
   console.assert(applicationMailDrafts({name:'Test', email:'test@example.com'}).some(draft => draft.label === 'Bekräftelse till kund'),'Test: ansökan ska skapa kundbekräftelse');
   console.assert(terminationMailDrafts({name:'Test', email:'test@example.com', place:'1'}).some(draft => draft.label === 'Bekräftelse till kund'),'Test: uppsägning ska skapa kundbekräftelse');
   console.assert(typeof inboxNewCount === 'function','Test: inkommet-fliken ska kunna räkna nya ärenden');
+  console.assert(typeof deleteHandledApplications === 'function','Test: hanterade ansökningar ska kunna raderas samlat');
+  console.assert(typeof assignAndEmailApplication === 'function','Test: ansökan ska kunna tilldelas och mailas direkt');
   console.assert(parseAmountNumber('2 500 kr') === 2500,'Test: belopp ska kunna läsas för bokföringsunderlag');
   console.assert(typeof renderBulkInvoiceTable([]) === 'string','Test: massfakturering ska kunna förhandsvisas');
   console.assert(typeof bulkInvoiceEmailBody(buildInvoiceModel(defaultSlips[0], {amount:'1000 kr', due:'30'})) === 'string','Test: massfakturor ska kunna mailas');
@@ -2018,11 +2058,14 @@ Object.assign(window, {
 Object.assign(window, {
   deleteApplication,
   deleteTermination,
+  deleteHandledApplications,
   assignApplicationSlip,
+  assignAndEmailApplication,
   releaseTerminationSlip
 });
 
 Object.assign(window, {
+  emailApplicationConfirmation,
   emailApplicationAssignment,
   emailTerminationConfirmation
 });
