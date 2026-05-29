@@ -341,6 +341,7 @@
         <div class="full cta-row">
           <button type="button" class="smallbtn" onclick="previewBulkInvoices()">Förhandsvisa årsavgifter</button>
           <button type="button" class="greenbtn" onclick="printBulkInvoices()">Skriv ut fakturor</button>
+          <button type="button" class="greenbtn" onclick="sendBulkInvoiceEmails()">Skicka fakturor via e-post</button>
           <button type="button" class="smallbtn" onclick="downloadBulkInvoiceCsv()">Exportera bokföringslista</button>
           <button type="button" class="smallbtn" onclick="markBulkInvoicesSent()">Markera som fakturerade</button>
         </div>
@@ -1121,6 +1122,57 @@ function printBulkInvoices(){
   openBulkInvoicePrintView(models);
 }
 
+function bulkInvoiceEmailSubject(model){
+  return applyInvoiceTemplate(invoiceSettings.subject || 'Faktura båtplats {plats} - Marums bryggor', model.slip, model.amount, model.dueDateSv, model.invoiceNumber, model.issueDateSv);
+}
+
+function bulkInvoiceEmailBody(model){
+  return [
+    `Fakturanummer: ${model.invoiceNumber}`,
+    `Avgiftsår: ${model.year}`,
+    `Fakturadatum: ${model.issueDateSv}`,
+    `Förfallodatum: ${model.dueDateSv}`,
+    '',
+    buildInvoiceText(model),
+    '',
+    'Spara gärna detta mail som underlag. PDF-faktura kan också skrivas ut från Marums bryggor.'
+  ].join('\n');
+}
+
+function openBulkInvoiceEmailView(models){
+  const win = window.open('', '_blank', 'width=1100,height=900');
+  if(!win){alert('Webbläsaren blockerade utskicksfönstret. Tillåt popup-fönster och försök igen.');return;}
+  const rows = models.map(model => {
+    const missingEmail = !model.slip.email;
+    const href = missingEmail ? '#' : 'mailto:' + encodeURIComponent(model.slip.email) + '?subject=' + encodeURIComponent(bulkInvoiceEmailSubject(model)) + '&body=' + encodeURIComponent(bulkInvoiceEmailBody(model));
+    const button = missingEmail ? '<span class="missing">Saknar e-post</span>' : `<a class="mailbtn" href="${escapeAttr(href)}">Öppna mail</a>`;
+    return `<tr><td>${button}</td><td>${escapeHtml(model.invoiceNumber)}</td><td>${escapeHtml(model.slip.pier)}</td><td>${escapeHtml(String(model.slip.place))}</td><td>${escapeHtml(model.slip.name || '')}</td><td>${escapeHtml(model.slip.email || '-')}</td><td>${escapeHtml(model.amount)}</td></tr>`;
+  }).join('');
+  const styles = `
+    <style>
+      body{font-family:Arial,Helvetica,sans-serif;background:#eef4f8;margin:0;padding:22px;color:#1f2937}
+      .sheet{max-width:1100px;margin:auto;background:white;border-radius:18px;padding:26px;box-shadow:0 16px 46px rgba(15,23,42,.14)}
+      h1{margin:0 0 8px;color:#145c96}
+      p{color:#64748b}
+      table{width:100%;border-collapse:collapse;font-size:14px}
+      th,td{border-bottom:1px solid #dbe2ea;padding:9px;text-align:left;vertical-align:top}
+      th{background:#f1f5f9}
+      .mailbtn{display:inline-block;background:#15803d;color:white;text-decoration:none;font-weight:bold;border-radius:8px;padding:8px 10px}
+      .missing{color:#b91c1c;font-weight:bold}
+    </style>
+  `;
+  win.document.open();
+  win.document.write(`<!DOCTYPE html><html lang="sv"><head><meta charset="UTF-8"><title>Skicka årsavgifter ${escapeHtml(models[0].year)}</title>${styles}</head><body><section class="sheet"><h1>Skicka fakturor via e-post</h1><p>Klicka på <b>Öppna mail</b> för varje kund. Varje mail får egen mottagare, ämne och fakturatext.</p><table><thead><tr><th>Skicka</th><th>Faktura</th><th>Brygga</th><th>Plats</th><th>Namn</th><th>E-post</th><th>Belopp</th></tr></thead><tbody>${rows}</tbody></table></section></body></html>`);
+  win.document.close();
+}
+
+function sendBulkInvoiceEmails(){
+  const models = buildBulkInvoiceModels();
+  if(!models.length){previewBulkInvoices();return;}
+  document.getElementById('bulkInvoicePreview').innerHTML = renderBulkInvoiceTable(models);
+  openBulkInvoiceEmailView(models);
+}
+
 function downloadBulkInvoiceCsv(){
   const models = buildBulkInvoiceModels();
   if(!models.length){previewBulkInvoices();return;}
@@ -1465,6 +1517,7 @@ function runTests(){
   console.assert(applicationMailBody({name:'Test', email:'test@example.com'}).includes('test@example.com'),'Test: ansökningsmail ska innehålla e-post');
   console.assert(parseAmountNumber('2 500 kr') === 2500,'Test: belopp ska kunna läsas för bokföringsunderlag');
   console.assert(typeof renderBulkInvoiceTable([]) === 'string','Test: massfakturering ska kunna förhandsvisas');
+  console.assert(typeof bulkInvoiceEmailBody(buildInvoiceModel(defaultSlips[0], {amount:'1000 kr', due:'30'})) === 'string','Test: massfakturor ska kunna mailas');
   console.assert(cleanSlipForSave({place:1,name:'Test'}).pier === 'A','Test: sparad plats ska behålla brygga från grundmallen');
   console.assert(Array.isArray(availableSlips()),'Test: lediga platser ska kunna rekommenderas');
   console.assert(Array.isArray(applications) && Array.isArray(terminations),'Test: ansökningar och uppsägningar ska vara listor');
@@ -1540,6 +1593,7 @@ Object.assign(window, {
   createInvoicePdf,
   previewBulkInvoices,
   printBulkInvoices,
+  sendBulkInvoiceEmails,
   downloadBulkInvoiceCsv,
   markBulkInvoicesSent,
   downloadInvoiceCsv,
