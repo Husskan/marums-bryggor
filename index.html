@@ -881,6 +881,9 @@ function setActivePage(page){
     alert('Logga in som administratör först.');
     page = 'overview';
   }
+  if(isAdmin && ['application','termination'].includes(page)){
+    page = 'inbox';
+  }
   currentPage = page;
   document.querySelectorAll('.page').forEach(el => el.classList.toggle('active', el.id === `page-${page}`));
   document.querySelectorAll('.page-nav button').forEach(el => el.classList.toggle('active', el.id === `nav-${page}`));
@@ -1984,7 +1987,12 @@ function updateAdminView(){
     if(el.classList.contains('page')) return;
     el.style.display = isAdmin ? (el.dataset.adminDisplay || 'block') : 'none';
   });
+  ['nav-application','nav-termination'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.style.display = isAdmin ? 'none' : 'inline-flex';
+  });
   if(!isAdmin && ['invoice','inbox','settings'].includes(currentPage)) setActivePage('overview');
+  if(isAdmin && ['application','termination'].includes(currentPage)) setActivePage('inbox');
   document.getElementById('authStatus').textContent = isAdmin ? 'Adminläge aktivt' : 'Publikt läge';
   document.getElementById('search').placeholder = isAdmin ? 'Sök plats, namn, e-post, telefon eller adress' : 'Sök plats eller namn';
   updateInboxBadge();
