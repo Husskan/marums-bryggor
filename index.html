@@ -206,6 +206,8 @@
     .request-item dl{display:grid;grid-template-columns:120px 1fr;gap:4px 10px;margin:10px 0 0;font-size:14px}
     .request-item dt{font-weight:bold}
     .request-item dd{margin:0}
+    .settings-list{display:grid;gap:8px;margin-top:10px}
+    .settings-list div{padding:8px 10px;border:1px solid #e2e8f0;border-radius:10px;background:#f8fafc}
     .empty-state{
       border:1px dashed #cbd5e1;
       border-radius:14px;
@@ -214,6 +216,7 @@
       color:var(--muted);
     }
     .fineprint{font-size:12px;color:var(--muted)}
+    .print-root{display:none}
     @media(max-width:1100px){
       .wrap,.public-area,.admin-area{grid-template-columns:1fr}
       .panel{position:relative}
@@ -235,7 +238,7 @@
       body{background:white}
       body *{visibility:hidden}
       .print-root,.print-root *{visibility:visible}
-      .print-root{position:absolute;left:0;top:0;width:100%}
+      .print-root{display:block;position:absolute;left:0;top:0;width:100%;background:white}
     }
   </style>
 </head>
@@ -258,6 +261,7 @@
     <button type="button" id="nav-invoice" class="admin-locked" data-admin-display="inline-flex" onclick="setActivePage('invoice')">Faktura</button>
     <button type="button" id="nav-application" onclick="setActivePage('application')">Ansökan</button>
     <button type="button" id="nav-termination" onclick="setActivePage('termination')">Uppsägning</button>
+    <button type="button" id="nav-settings" class="admin-locked" data-admin-display="inline-flex" onclick="setActivePage('settings')">Inställningar</button>
   </nav>
 
   <section id="page-overview" class="page active">
@@ -313,14 +317,14 @@
     <div class="invoice-grid">
       <input id="invSender" placeholder="Avsändare / förening">
       <input id="invEmail" placeholder="Avsändarens e-post">
-      <input id="harborMasterEmail" placeholder="Hamnkaptenens e-post för ansökningar">
+      <input id="harborMasterEmail" placeholder="Hamnkaptenens e-post">
       <input id="invBg" placeholder="Bankgiro / Plusgiro">
       <input id="invSwish" placeholder="Swish">
       <input id="invAmount" placeholder="Standardbelopp, t.ex. 2500 kr">
       <input id="invDue" placeholder="Förfallotid i dagar, t.ex. 30">
       <input id="invSubject" placeholder="Ämnesrad för e-post">
       <input id="invReferencePrefix" placeholder="Fakturaserie, t.ex. MB">
-      <textarea id="invText" class="full" placeholder="Fakturatext. Du kan använda: {namn}, {plats}, {brygga}, {belopp}, {forfallodatum}, {adress}, {postort}, {telefon}, {bankgiro}, {swish}, {fakturanummer}, {datum}"></textarea>
+      <textarea id="invText" class="full" placeholder="Fakturatext. Du kan använda: {namn}, {plats}, {brygga}, {belopp}, {intradesavgift}, {forfallodatum}, {adress}, {postort}, {telefon}, {bankgiro}, {swish}, {fakturanummer}, {datum}"></textarea>
       <div class="full cta-row">
         <button type="button" onclick="saveInvoiceSettings()">Spara mall och e-post</button>
         <button type="button" class="smallbtn" onclick="previewInvoiceTemplate()">Förhandsvisa faktura</button>
@@ -403,6 +407,28 @@
       <div id="terminationsList" class="request-list"></div>
     </section>
   </section>
+
+  <section id="page-settings" class="page admin-box admin-locked" data-admin-display="block">
+    <h2>Inställningar</h2>
+    <p class="muted">Här sparas uppgifter för hamnkapten, administratörer och årsavgifter. Lösenord för admin är marum2026 på alla enheter.</p>
+    <div class="invoice-grid">
+      <input id="settingsHarborName" placeholder="Hamnkaptenens namn">
+      <input id="settingsHarborEmail" placeholder="Hamnkaptenens e-post">
+      <input id="settingsHarborPhone" placeholder="Hamnkaptenens telefon">
+      <input id="settingsAnnualFee" placeholder="Årsavgift, t.ex. 2500 kr">
+      <input id="settingsEntryFee" placeholder="Inträdesavgift, t.ex. 1000 kr">
+      <input id="settingsDue" placeholder="Förfallotid i dagar, t.ex. 30">
+      <textarea id="settingsAdmins" class="full" placeholder="Administratörer, en per rad"></textarea>
+      <div class="settings-list full">
+        <div>Ansökningar och uppsägningar skickas till hamnkaptenens e-post.</div>
+        <div>Årsavgiften gäller per kalenderår och reduceras inte under året.</div>
+        <div>Inträdesavgiften betalas endast första året.</div>
+      </div>
+      <div class="full cta-row">
+        <button type="button" onclick="saveAdminSettings()">Spara inställningar</button>
+      </div>
+    </div>
+  </section>
 </main>
 
 <div id="slipModal" class="modal-backdrop" onclick="closeSlipModal(event)">
@@ -436,11 +462,13 @@
       <input id="editNote" placeholder="Anteckning">
       <div class="cta-row">
         <button type="button" onclick="saveSelected()">Spara ändring</button>
+        <button type="button" class="smallbtn" onclick="clearInvoiceMarker()">Ta bort fakturamarkering</button>
         <button type="button" class="smallbtn" onclick="closeSlipModal()">Klar</button>
       </div>
     </div>
   </section>
 </div>
+<div id="printRoot" class="print-root"></div>
 
 <script type="module">
 'use strict';
@@ -461,7 +489,7 @@ const LOCAL_INVOICE_KEY = 'marumInvoiceSettings_local_v1';
 const LOCAL_APPLICATIONS_KEY = 'marumApplications_local_v1';
 const LOCAL_TERMINATIONS_KEY = 'marumTerminations_local_v1';
 const ADMIN_AUTH_KEY = 'marumAdminLoggedIn_v1';
-const ADMIN_PASSWORD_KEY = 'marumAdminPassword_v1';
+const ADMIN_PASSWORD = 'marum2026';
 
 let db = null;
 let cloudEnabled = false;
@@ -476,7 +504,7 @@ let currentPage = 'overview';
 function cloneData(data){return JSON.parse(JSON.stringify(data));}
 
 function makeSlot(pier, side, place, name, status){
-  return { pier, side, place, name:name||'', status:status||'Okänd', email:'', phone:'', address:'', postal:'', paid:false, invoiceSent:false, note:'' };
+  return { pier, side, place, name:name||'', status:status||'Okänd', email:'', phone:'', address:'', postal:'', paid:false, invoiceSent:false, invoiceSentYear:'', invoiceSentAt:'', note:'' };
 }
 
 const defaultSlips = [
@@ -494,10 +522,14 @@ function defaultInvoiceSettings(){
   return {
     sender:'Marums samfällighet',
     senderEmail:'',
+    harborMasterName:'',
     harborMasterEmail:'',
+    harborMasterPhone:'',
+    administrators:'',
     bankgiro:'',
     swish:'',
     amount:'',
+    entryFee:'',
     due:'30',
     subject:'Faktura båtplats {plats} - Marums bryggor',
     referencePrefix:'MB',
@@ -511,6 +543,7 @@ function defaultInvoiceSettings(){
       'Båtplats: {plats}',
       'Brygga: {brygga}',
       'Belopp: {belopp}',
+      'Inträdesavgift första året: {intradesavgift}',
       'Förfallodatum: {forfallodatum}',
       '',
       'Betalning:',
@@ -549,6 +582,21 @@ function addDays(date, days){
   const next = new Date(date);
   next.setDate(next.getDate() + days);
   return next;
+}
+
+function currentInvoiceYear(){
+  return String(new Date().getFullYear());
+}
+
+function invoiceYearFromDate(value){
+  const date = value ? new Date(value) : new Date();
+  return Number.isNaN(date.getTime()) ? currentInvoiceYear() : String(date.getFullYear());
+}
+
+function isInvoiceSentForCurrentYear(slip){
+  if(!slip || !slip.invoiceSent) return false;
+  if(!slip.invoiceSentYear && !slip.invoiceSentAt) return false;
+  return String(slip.invoiceSentYear || invoiceYearFromDate(slip.invoiceSentAt)) === currentInvoiceYear();
 }
 
 function defaultRequestFields(){
@@ -601,7 +649,7 @@ function subscribeCloud(){
       const data = d.data();
       cloudByPlace.set(Number(data.place || d.id), data);
     });
-    slips = cloneData(defaultSlips).map(base => Object.assign({email:'',phone:'',address:'',postal:'',paid:false,invoiceSent:false,note:''}, base, cloudByPlace.get(Number(base.place)) || {}));
+    slips = cloneData(defaultSlips).map(base => Object.assign({email:'',phone:'',address:'',postal:'',paid:false,invoiceSent:false,invoiceSentYear:'',invoiceSentAt:'',note:''}, base, cloudByPlace.get(Number(base.place)) || {}));
     render();
     if(selected) selectSlip(selected.place, false);
   }, error => {
@@ -718,7 +766,7 @@ function cleanSlipForSave(slip){
     pier: base ? base.pier : '',
     side: base ? base.side : '',
     place: base ? base.place : slip.place,
-    name:'', status:'Okänd', email:'', phone:'', address:'', postal:'', paid:false, invoiceSent:false, note:''
+    name:'', status:'Okänd', email:'', phone:'', address:'', postal:'', paid:false, invoiceSent:false, invoiceSentYear:'', invoiceSentAt:'', note:''
   }, slip);
 }
 
@@ -740,7 +788,7 @@ function makeSlipEl(s, bottom){
   const freeLabel = isFree ? '<span class="slip-status">Ledig</span>' : '';
   el.className = 'slip ' + (bottom ? 'bottom ' : '') + statusClass;
   el.title = 'Plats ' + s.place + ' - ' + s.status + ' - ' + (s.name || 'ingen hyresgäst');
-  el.innerHTML = '<span class="nr">' + s.place + '</span>' + (s.status === 'Uthyrd' ? '<span class="boat ' + (s.paid ? 'paid' : '') + '"></span>' : freeLabel) + (s.invoiceSent ? '<span class="invoice-dot" title="Faktura skickad"></span>' : '');
+  el.innerHTML = '<span class="nr">' + s.place + '</span>' + (s.status === 'Uthyrd' ? '<span class="boat ' + (s.paid ? 'paid' : '') + '"></span>' : freeLabel) + (isInvoiceSentForCurrentYear(s) ? '<span class="invoice-dot" title="Faktura skickad i år"></span>' : '');
   el.onclick = () => selectSlip(s.place);
   return el;
 }
@@ -799,7 +847,7 @@ function render(){
 }
 
 function setActivePage(page){
-  if(page === 'invoice' && !isAdmin){
+  if(['invoice','settings'].includes(page) && !isAdmin){
     alert('Logga in som administratör först.');
     page = 'overview';
   }
@@ -808,6 +856,7 @@ function setActivePage(page){
   document.querySelectorAll('.page-nav button').forEach(el => el.classList.toggle('active', el.id === `nav-${page}`));
   if(page === 'overview') render();
   if(page === 'invoice') previewInvoiceTemplate();
+  if(page === 'settings') fillSettingsForm();
   window.scrollTo({top:0, behavior:'smooth'});
 }
 
@@ -835,7 +884,8 @@ function selectSlip(place, openModal=true){
   const found = getSlipByPlace(place);
   if(!found){clearSelection();return;}
   selected = found;
-  const adminDetail = '<b>Hyresgäst:</b> ' + escapeHtml(selected.name || '-') + '<br><b>E-post:</b> ' + escapeHtml(selected.email || '-') + '<br><b>Telefon:</b> ' + escapeHtml(selected.phone || '-') + '<br><b>Adress:</b> ' + escapeHtml(selected.address || '-') + '<br><b>Post/ort:</b> ' + escapeHtml(selected.postal || '-') + '<br><b>Status:</b> ' + escapeHtml(selected.status) + '<br><b>Faktura:</b> ' + (selected.paid ? 'Betald' : 'Ej betald') + '<br><b>Faktura skickad:</b> ' + (selected.invoiceSent ? 'Ja' : 'Nej') + '<br><b>Anteckning:</b> ' + escapeHtml(selected.note || '-');
+  const sentYear = selected.invoiceSentYear || (selected.invoiceSentAt ? invoiceYearFromDate(selected.invoiceSentAt) : '-');
+  const adminDetail = '<b>Hyresgäst:</b> ' + escapeHtml(selected.name || '-') + '<br><b>E-post:</b> ' + escapeHtml(selected.email || '-') + '<br><b>Telefon:</b> ' + escapeHtml(selected.phone || '-') + '<br><b>Adress:</b> ' + escapeHtml(selected.address || '-') + '<br><b>Post/ort:</b> ' + escapeHtml(selected.postal || '-') + '<br><b>Status:</b> ' + escapeHtml(selected.status) + '<br><b>Faktura:</b> ' + (selected.paid ? 'Betald' : 'Ej betald') + '<br><b>Faktura skickad i år:</b> ' + (isInvoiceSentForCurrentYear(selected) ? 'Ja' : 'Nej') + (selected.invoiceSent ? '<br><b>Senast markerad:</b> ' + escapeHtml(sentYear) : '') + '<br><b>Anteckning:</b> ' + escapeHtml(selected.note || '-');
   const publicDetail = '<b>Hyresgäst:</b> ' + escapeHtml(selected.name || '-') + '<br><b>Status:</b> ' + escapeHtml(selected.status);
   document.getElementById('pNo').textContent = selected.place;
   document.getElementById('pText').textContent = 'Brygga ' + selected.pier + ' - ' + selected.side;
@@ -883,12 +933,51 @@ function fillInvoiceForm(){
   document.getElementById('bulkYear').value = new Date().getFullYear();
   document.getElementById('bulkAmount').value = invoiceSettings.amount || '';
   document.getElementById('bulkDue').value = invoiceSettings.due || '30';
+  fillSettingsForm();
+}
+
+function fillSettingsForm(){
+  const fields = {
+    settingsHarborName: invoiceSettings.harborMasterName || invoiceSettings.sender || '',
+    settingsHarborEmail: invoiceSettings.harborMasterEmail || invoiceSettings.senderEmail || '',
+    settingsHarborPhone: invoiceSettings.harborMasterPhone || '',
+    settingsAnnualFee: invoiceSettings.amount || '',
+    settingsEntryFee: invoiceSettings.entryFee || '',
+    settingsDue: invoiceSettings.due || '30',
+    settingsAdmins: invoiceSettings.administrators || ''
+  };
+  Object.entries(fields).forEach(([id, value]) => {
+    const el = document.getElementById(id);
+    if(el) el.value = value;
+  });
+}
+
+function syncHarborMasterAsSender(){
+  if(invoiceSettings.harborMasterName) invoiceSettings.sender = invoiceSettings.harborMasterName;
+  if(invoiceSettings.harborMasterEmail) invoiceSettings.senderEmail = invoiceSettings.harborMasterEmail;
+}
+
+async function saveAdminSettings(){
+  if(!isAdmin){alert('Logga in som administratör först.');return;}
+  invoiceSettings.harborMasterName = document.getElementById('settingsHarborName').value.trim();
+  invoiceSettings.harborMasterEmail = document.getElementById('settingsHarborEmail').value.trim();
+  invoiceSettings.harborMasterPhone = document.getElementById('settingsHarborPhone').value.trim();
+  invoiceSettings.amount = document.getElementById('settingsAnnualFee').value.trim();
+  invoiceSettings.entryFee = document.getElementById('settingsEntryFee').value.trim();
+  invoiceSettings.due = document.getElementById('settingsDue').value.trim() || '30';
+  invoiceSettings.administrators = document.getElementById('settingsAdmins').value.trim();
+  syncHarborMasterAsSender();
+  await saveInvoiceSettingsToStore();
+  fillInvoiceForm();
+  previewInvoiceTemplate();
+  alert('Inställningarna är sparade.');
 }
 
 async function saveInvoiceSettings(){
   invoiceSettings.sender = document.getElementById('invSender').value.trim();
   invoiceSettings.senderEmail = document.getElementById('invEmail').value.trim();
   invoiceSettings.harborMasterEmail = document.getElementById('harborMasterEmail').value.trim();
+  invoiceSettings.harborMasterName = invoiceSettings.harborMasterName || invoiceSettings.sender;
   invoiceSettings.bankgiro = document.getElementById('invBg').value.trim();
   invoiceSettings.swish = document.getElementById('invSwish').value.trim();
   invoiceSettings.amount = document.getElementById('invAmount').value.trim();
@@ -897,6 +986,7 @@ async function saveInvoiceSettings(){
   invoiceSettings.referencePrefix = document.getElementById('invReferencePrefix').value.trim() || 'MB';
   invoiceSettings.text = document.getElementById('invText').value;
   await saveInvoiceSettingsToStore();
+  fillSettingsForm();
   previewInvoiceTemplate();
   alert('Fakturamallen är sparad.');
 }
@@ -916,6 +1006,7 @@ function buildInvoiceModel(slip, overrides={}){
     invoiceNumber,
     sender: invoiceSettings.sender || 'Marums samfällighet',
     senderEmail: invoiceSettings.senderEmail || '',
+    entryFee: invoiceSettings.entryFee || '',
     bankgiro: invoiceSettings.bankgiro || '-',
     swish: invoiceSettings.swish || '-',
     subject: invoiceSettings.subject || 'Faktura båtplats {plats} - Marums bryggor'
@@ -935,11 +1026,12 @@ function applyInvoiceTemplate(template, slip, amount, dueDate, invoiceNumber, is
     telefon: slip.phone || '',
     bankgiro: invoiceSettings.bankgiro || '',
     swish: invoiceSettings.swish || '',
+    intradesavgift: invoiceSettings.entryFee || '',
     avsandare: invoiceSettings.sender || 'Marums samfällighet',
     fakturanummer: invoiceNumber || '',
     datum: issueDate || ''
   };
-  return String(template || '').replace(/\{(namn|plats|brygga|belopp|forfallodatum|adress|postort|telefon|bankgiro|swish|avsandare|fakturanummer|datum)\}/g, (_, key) => values[key]);
+  return String(template || '').replace(/\{(namn|plats|brygga|belopp|forfallodatum|adress|postort|telefon|bankgiro|swish|intradesavgift|avsandare|fakturanummer|datum)\}/g, (_, key) => values[key]);
 }
 
 function buildInvoiceText(model){
@@ -1014,10 +1106,28 @@ function ensureInvoiceModel(){
   return buildInvoiceModel(selected, { amount, due });
 }
 
+function printInsideApp(html){
+  const root = document.getElementById('printRoot');
+  root.innerHTML = html;
+  window.setTimeout(() => window.print(), 80);
+  window.setTimeout(() => { root.innerHTML = ''; }, 1800);
+}
+
+function openPrintableWindow(title, bodyHtml, styles, fallbackHtml){
+  const win = window.open('', '_blank', 'width=1100,height=900');
+  if(!win){
+    printInsideApp(fallbackHtml || bodyHtml);
+    return false;
+  }
+  win.document.open();
+  win.document.write(`<!DOCTYPE html><html lang="sv"><head><meta charset="UTF-8"><title>${escapeHtml(title)}</title>${styles}</head><body>${bodyHtml}<script>window.onload=function(){window.print();};<\/script></body></html>`);
+  win.document.close();
+  return true;
+}
+
 function openInvoicePrintView(model){
-  const win = window.open('', '_blank', 'width=960,height=900');
-  if(!win){alert('Webbläsaren blockerade fakturafönstret. Tillåt popup-fönster och försök igen.');return;}
   const invoiceHtml = renderInvoicePreview(model);
+  const bodyHtml = `<div class="sheet"><div class="muted">Marums bryggor</div><h1>Faktura</h1>${invoiceHtml}</div>`;
   const styles = `
     <style>
       body{font-family:Arial,Helvetica,sans-serif;background:#eef4f8;margin:0;padding:24px;color:#1f2937}
@@ -1039,17 +1149,28 @@ function openInvoicePrintView(model){
       }
     </style>
   `;
-  win.document.open();
-  win.document.write(`<!DOCTYPE html><html lang="sv"><head><meta charset="UTF-8"><title>Faktura ${escapeHtml(model.invoiceNumber)}</title>${styles}</head><body><div class="sheet"><div class="muted">Marums bryggor</div><h1>Faktura</h1>${invoiceHtml}</div><script>window.onload=function(){window.print();};<\/script></body></html>`);
-  win.document.close();
+  openPrintableWindow(`Faktura ${model.invoiceNumber}`, bodyHtml, styles, styles + bodyHtml);
 }
 
 async function markInvoiceSent(model){
   if(!selected) return;
   selected.invoiceSent = true;
+  selected.invoiceSentYear = invoiceYearFromDate(model?.issueDateSv);
+  selected.invoiceSentAt = new Date().toISOString();
   selected.note = selected.note || '';
-  await saveSlip(selected);
+  await saveSlip(cleanSlipForSave(selected));
   if(!cloudEnabled) selectSlip(selected.place, false);
+}
+
+async function clearInvoiceMarker(){
+  if(!isAdmin){alert('Logga in som administratör först.');return;}
+  if(!selected){alert('Välj en båtplats först.');return;}
+  selected.invoiceSent = false;
+  selected.invoiceSentYear = '';
+  selected.invoiceSentAt = '';
+  await saveSlip(cleanSlipForSave(selected));
+  selectSlip(selected.place, false);
+  render();
 }
 
 async function createInvoicePdf(){
@@ -1079,7 +1200,7 @@ async function sendInvoiceEmail(){
 
 function downloadInvoiceCsv(){
   const rows = [['Brygga','Plats','Namn','E-post','Telefon','Adress','Postnummer och ort','Status','Betald','Faktura skickad','Anteckning']];
-  slips.forEach(s => rows.push([s.pier,s.place,s.name||'',s.email||'',s.phone||'',s.address||'',s.postal||'',s.status,s.paid?'Ja':'Nej',s.invoiceSent?'Ja':'Nej',s.note||'']));
+  slips.forEach(s => rows.push([s.pier,s.place,s.name||'',s.email||'',s.phone||'',s.address||'',s.postal||'',s.status,s.paid?'Ja':'Nej',isInvoiceSentForCurrentYear(s)?'Ja':'Nej',s.note||'']));
   const csv = rows.map(row => row.map(cell => '"' + String(cell).replace(/"/g,'""') + '"').join(';')).join('\n');
   const blob = new Blob(['\uFEFF' + csv], { type:'text/csv;charset=utf-8' });
   const a = document.createElement('a');
@@ -1100,7 +1221,7 @@ function getBulkInvoiceOptions(){
 function bulkInvoiceSlips(options){
   return slips
     .filter(s => s.status === 'Uthyrd' && s.name)
-    .filter(s => !options.onlyUnsent || !s.invoiceSent)
+    .filter(s => !options.onlyUnsent || !isInvoiceSentForCurrentYear(s))
     .slice()
     .sort((a,b) => String(a.pier).localeCompare(String(b.pier)) || Number(a.place) - Number(b.place));
 }
@@ -1135,11 +1256,10 @@ function previewBulkInvoices(){
 }
 
 function openBulkInvoicePrintView(models){
-  const win = window.open('', '_blank', 'width=1100,height=900');
-  if(!win){alert('Webbläsaren blockerade fakturafönstret. Tillåt popup-fönster och försök igen.');return;}
   const total = models.reduce((sum, model) => sum + model.amountNumber, 0);
   const rows = models.map(model => `<tr><td>${escapeHtml(model.invoiceNumber)}</td><td>${escapeHtml(model.slip.pier)}</td><td>${escapeHtml(String(model.slip.place))}</td><td>${escapeHtml(model.slip.name || '')}</td><td>${escapeHtml(model.amount)}</td></tr>`).join('');
   const invoices = models.map(model => `<section class="sheet"><div class="muted">Marums bryggor</div><h1>Faktura årsavgift ${escapeHtml(model.year)}</h1>${renderInvoicePreview(model)}</section>`).join('');
+  const bodyHtml = `<section class="sheet summary"><h1>Bokföringsunderlag årsavgifter ${escapeHtml(models[0].year)}</h1><p>Antal fakturor: <b>${models.length}</b><br>Summa: <b>${escapeHtml(String(total.toLocaleString('sv-SE')))} kr</b></p><table><thead><tr><th>Faktura</th><th>Brygga</th><th>Plats</th><th>Namn</th><th>Belopp</th></tr></thead><tbody>${rows}</tbody></table></section>${invoices}`;
   const styles = `
     <style>
       body{font-family:Arial,Helvetica,sans-serif;background:#eef4f8;margin:0;padding:22px;color:#1f2937}
@@ -1163,9 +1283,7 @@ function openBulkInvoicePrintView(models){
       }
     </style>
   `;
-  win.document.open();
-  win.document.write(`<!DOCTYPE html><html lang="sv"><head><meta charset="UTF-8"><title>Massfakturering ${escapeHtml(models[0].year)}</title>${styles}</head><body><section class="sheet summary"><h1>Bokföringsunderlag årsavgifter ${escapeHtml(models[0].year)}</h1><p>Antal fakturor: <b>${models.length}</b><br>Summa: <b>${escapeHtml(String(total.toLocaleString('sv-SE')))} kr</b></p><table><thead><tr><th>Faktura</th><th>Brygga</th><th>Plats</th><th>Namn</th><th>Belopp</th></tr></thead><tbody>${rows}</tbody></table></section>${invoices}<script>window.onload=function(){window.print();};<\/script></body></html>`);
-  win.document.close();
+  openPrintableWindow(`Massfakturering ${models[0].year}`, bodyHtml, styles, styles + bodyHtml);
 }
 
 function printBulkInvoices(){
@@ -1247,6 +1365,8 @@ async function markBulkInvoicesSent(){
     const slip = getSlipByPlace(model.slip.place);
     if(slip){
       slip.invoiceSent = true;
+      slip.invoiceSentYear = String(model.year || currentInvoiceYear());
+      slip.invoiceSentAt = new Date().toISOString();
       slip.paid = false;
       await saveSlip(cleanSlipForSave(slip));
     }
@@ -1278,6 +1398,7 @@ async function resetData(){
 function applicationMailBody(record){
   return [
     'Ny ansökan om båtplats har kommit in.',
+    `Mottagare/avsändare i systemet: ${invoiceSettings.senderEmail || invoiceSettings.harborMasterEmail || '-'}`,
     '',
     `Namn: ${record.name || '-'}`,
     `E-post: ${record.email || '-'}`,
@@ -1300,6 +1421,32 @@ function sendApplicationToHarborMaster(record){
     return;
   }
   openMailDraft(to, `Ny båtplatsansökan - ${record.name || 'okänd'}`, applicationMailBody(record));
+}
+
+function terminationMailBody(record){
+  return [
+    'Ny uppsägning av båtplats har kommit in.',
+    `Mottagare/avsändare i systemet: ${invoiceSettings.senderEmail || invoiceSettings.harborMasterEmail || '-'}`,
+    '',
+    `Namn: ${record.name || '-'}`,
+    `E-post: ${record.email || '-'}`,
+    `Telefon: ${record.phone || '-'}`,
+    `Båtplats: ${record.place || '-'}`,
+    `Önskat slutdatum: ${record.moveOutDate || '-'}`,
+    '',
+    `Meddelande: ${record.reason || '-'}`,
+    '',
+    'Uppsägningen är även sparad i Marums bryggor.'
+  ].join('\n');
+}
+
+function sendTerminationToHarborMaster(record){
+  const to = invoiceSettings.harborMasterEmail || invoiceSettings.senderEmail || '';
+  if(!to){
+    document.getElementById('termFeedback').textContent = 'Uppsägningen är sparad. Hamnkaptenens e-post är inte inställd ännu.';
+    return;
+  }
+  openMailDraft(to, `Ny uppsägning båtplats ${record.place || ''} - ${record.name || 'okänd'}`, terminationMailBody(record));
 }
 
 async function submitApplication(){
@@ -1345,8 +1492,9 @@ async function submitTermination(){
     return;
   }
   await saveTerminationRecord(record);
+  sendTerminationToHarborMaster(record);
   ['termName','termEmail','termPhone','termPlace','termMoveOutDate','termReason'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('termFeedback').textContent = 'Uppsägningen är skickad och registrerad.';
+  document.getElementById('termFeedback').textContent = invoiceSettings.harborMasterEmail ? 'Uppsägningen är registrerad och ett mailutkast till hamnkaptenen har öppnats.' : 'Uppsägningen är skickad och registrerad.';
 }
 
 function renderApplications(){renderRequestList(sortNewest(applications), 'applicationsList', 'application');}
@@ -1466,6 +1614,8 @@ async function assignApplicationSlip(id, place){
     status:'Uthyrd',
     paid:false,
     invoiceSent:false,
+    invoiceSentYear:'',
+    invoiceSentAt:'',
     note:[slip.note, record.note ? `Ansökan: ${record.note}` : ''].filter(Boolean).join(' | ')
   }));
   await saveSlip(updatedSlip);
@@ -1543,6 +1693,8 @@ async function releaseTerminationSlip(id){
       status:'Ledig',
       paid:false,
       invoiceSent:false,
+      invoiceSentYear:'',
+      invoiceSentAt:'',
       note:`Friställd ${date}`
     }))
     : cleanSlipForSave(Object.assign({}, slip, {
@@ -1567,7 +1719,11 @@ function runTests(){
   console.assert(buildInvoiceModel(defaultSlips[0], { amount:'1000 kr', due:'30' }).invoiceNumber.includes('MB'),'Test: fakturanummer ska skapas');
   console.assert(applyInvoiceTemplate('Telefon {telefon}', Object.assign({}, defaultSlips[0], { phone:'0701234567' }), '1000 kr', '2026-06-30', 'MB-1', '2026-05-27').includes('0701234567'),'Test: fakturamall ska kunna skriva ut telefonnummer');
   console.assert(Object.prototype.hasOwnProperty.call(defaultInvoiceSettings(), 'harborMasterEmail'),'Test: hamnkaptenens e-post ska kunna sparas');
+  console.assert(Object.prototype.hasOwnProperty.call(defaultInvoiceSettings(), 'entryFee'),'Test: inträdesavgift ska kunna sparas');
+  console.assert(ADMIN_PASSWORD === 'marum2026','Test: adminlösenordet ska vara gemensamt');
+  console.assert(isInvoiceSentForCurrentYear({invoiceSent:true, invoiceSentYear:currentInvoiceYear()}) === true,'Test: fakturamarkering gäller aktuellt år');
   console.assert(applicationMailBody({name:'Test', email:'test@example.com'}).includes('test@example.com'),'Test: ansökningsmail ska innehålla e-post');
+  console.assert(terminationMailBody({name:'Test', place:'1'}).includes('uppsägning'),'Test: uppsägningsmail ska kunna skapas');
   console.assert(parseAmountNumber('2 500 kr') === 2500,'Test: belopp ska kunna läsas för bokföringsunderlag');
   console.assert(typeof renderBulkInvoiceTable([]) === 'string','Test: massfakturering ska kunna förhandsvisas');
   console.assert(typeof bulkInvoiceEmailBody(buildInvoiceModel(defaultSlips[0], {amount:'1000 kr', due:'30'})) === 'string','Test: massfakturor ska kunna mailas');
@@ -1583,9 +1739,8 @@ function updateAdminView(){
   document.querySelectorAll('.admin-locked').forEach(el => {
     el.style.display = isAdmin ? (el.dataset.adminDisplay || 'block') : 'none';
   });
-  if(!isAdmin && currentPage === 'invoice') setActivePage('overview');
-  const passwordConfigured = Boolean(localStorage.getItem(ADMIN_PASSWORD_KEY));
-  document.getElementById('authStatus').textContent = isAdmin ? 'Adminläge aktivt' : (passwordConfigured ? 'Publikt läge' : 'Admin ej konfigurerad');
+  if(!isAdmin && ['invoice','settings'].includes(currentPage)) setActivePage('overview');
+  document.getElementById('authStatus').textContent = isAdmin ? 'Adminläge aktivt' : 'Publikt läge';
   document.getElementById('search').placeholder = isAdmin ? 'Sök plats, namn, e-post, telefon eller adress' : 'Sök plats eller namn';
   if(selected) selectSlip(selected.place, false);
 }
@@ -1593,21 +1748,7 @@ function updateAdminView(){
 function adminLogin(){
   const field = document.getElementById('adminPassword');
   const enteredPassword = field.value;
-  const storedPassword = localStorage.getItem(ADMIN_PASSWORD_KEY);
-  if(!storedPassword){
-    if(enteredPassword.trim().length < 6){
-      alert('Ange minst 6 tecken för att skapa ett lokalt administratörslösenord.');
-      return;
-    }
-    localStorage.setItem(ADMIN_PASSWORD_KEY, enteredPassword);
-    isAdmin = true;
-    localStorage.setItem(ADMIN_AUTH_KEY,'true');
-    field.value = '';
-    updateAdminView();
-    alert('Administratörslösenord sparat lokalt i denna webbläsare.');
-    return;
-  }
-  if(enteredPassword === storedPassword){
+  if(enteredPassword === ADMIN_PASSWORD){
     isAdmin = true;
     localStorage.setItem(ADMIN_AUTH_KEY,'true');
     field.value = '';
@@ -1644,6 +1785,7 @@ Object.assign(window, {
   setActivePage,
   closeSlipModal,
   saveSelected,
+  clearInvoiceMarker,
   sendInvoiceEmail,
   createInvoicePdf,
   previewBulkInvoices,
@@ -1655,6 +1797,7 @@ Object.assign(window, {
   downloadData,
   resetData,
   saveInvoiceSettings,
+  saveAdminSettings,
   previewInvoiceTemplate,
   seedCloudData,
   submitApplication,
