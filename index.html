@@ -31,35 +31,35 @@
     h1{margin:0 0 6px;font-size:30px}
     h2,h3{margin:0 0 12px}
     header p{margin:0;opacity:.95}
-    main{max-width:1380px;margin:auto;padding:18px}
-    .top,.login-box,.cta-row,.stack-actions{display:flex;gap:10px;flex-wrap:wrap}
+    main{max-width:1280px;margin:auto;padding:14px}
+    .top,.login-box,.cta-row,.stack-actions{display:flex;gap:8px;flex-wrap:wrap}
     .login-box,.card,.panel,.invoice-box,.public-box,.admin-box{
       background:white;
       border:1px solid var(--line);
-      border-radius:18px;
-      padding:18px;
+      border-radius:16px;
+      padding:14px;
       box-shadow:var(--shadow);
     }
-    .login-box{align-items:center;margin-bottom:14px}
+    .login-box{align-items:center;margin-bottom:10px}
     .auth-status{font-weight:bold;color:var(--blue)}
     input,select,textarea{
-      padding:11px 12px;
+      padding:9px 11px;
       border:1px solid var(--line);
-      border-radius:10px;
-      font-size:15px;
+      border-radius:9px;
+      font-size:14px;
       background:white;
       width:100%;
     }
-    textarea{min-height:110px;resize:vertical}
-    .top{margin-bottom:14px}
+    textarea{min-height:96px;resize:vertical}
+    .top{margin-bottom:10px}
     .top input{flex:1;min-width:230px}
-    .wrap{display:grid;grid-template-columns:1fr 360px;gap:16px}
+    .wrap{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:12px;align-items:start}
     .map{
       background:linear-gradient(160deg,var(--water2),var(--water));
       border:1px solid var(--line);
-      border-radius:18px;
-      padding:20px;
-      min-height:760px;
+      border-radius:16px;
+      padding:16px;
+      min-height:680px;
       position:relative;
       overflow:auto;
       box-shadow:var(--shadow);
@@ -67,10 +67,10 @@
     .land{position:absolute;left:0;top:0;width:260px;height:100%;background:#d9ead3;border-right:8px solid #b7a17a}
     .road{position:absolute;left:48px;top:0;width:80px;height:100%;background:#d1d5db;transform:skewX(-10deg);opacity:.9}
     .label-land{position:absolute;left:25px;top:30px;font-weight:bold;color:#365314}
-    .pier{position:relative;margin-left:260px;margin-bottom:74px;min-width:760px}
-    .pier-row{display:grid;gap:7px}
-    .side{display:flex;gap:7px;align-items:center}
-    .dock{height:34px;background:linear-gradient(#9b7a4d,#755734);border:2px solid var(--dock-dark);border-radius:7px;position:relative;margin:8px 0;width:100%}
+    .pier{position:relative;margin-left:260px;margin-bottom:56px;min-width:760px}
+    .pier-row{display:grid;gap:6px}
+    .side{display:flex;gap:6px;align-items:center}
+    .dock{height:30px;background:linear-gradient(#9b7a4d,#755734);border:2px solid var(--dock-dark);border-radius:7px;position:relative;margin:6px 0;width:100%}
     .dock:before{content:"";position:absolute;left:-82px;top:11px;width:82px;height:12px;background:#8a6a42;border-radius:4px}
     .pier-label{
       position:absolute;
@@ -79,16 +79,16 @@
       transform:translateY(-50%);
       background:var(--blue-dark);
       color:white;
-      padding:8px 14px;
-      border-radius:10px;
+      padding:6px 11px;
+      border-radius:9px;
       font-weight:bold;
-      font-size:16px;
+      font-size:14px;
       box-shadow:0 4px 10px rgba(0,0,0,.15);
       z-index:2;
     }
     .slip{
-      width:42px;
-      height:72px;
+      width:38px;
+      height:66px;
       border:1px dashed #3b82f6;
       border-radius:8px;
       display:flex;
@@ -108,48 +108,48 @@
     .invoice-dot{position:absolute;right:3px;top:3px;width:10px;height:10px;border-radius:50%;background:var(--warn);border:1px solid white;box-shadow:0 0 0 1px rgba(0,0,0,.15)}
     .empty{background:rgba(255,255,255,.18)}
     .guest{background:var(--yellow)}
-    .panel{position:sticky;top:12px;height:max-content}
+    .panel{position:sticky;top:10px;height:max-content}
     .panel h2,.invoice-box h2,.public-box h2,.admin-box h2{color:var(--blue)}
-    .big{font-size:44px;font-weight:bold;color:var(--blue)}
+    .big{font-size:38px;font-weight:bold;color:var(--blue)}
     .muted{color:var(--muted)}
-    .detail{border-top:1px solid #e5e7eb;margin-top:14px;padding-top:14px;line-height:1.6}
-    .legend,.admin,.invoice-grid,.request-grid,.card-grid{display:grid;gap:10px}
-    .legend{margin-top:16px}
+    .detail{border-top:1px solid #e5e7eb;margin-top:10px;padding-top:10px;line-height:1.45;font-size:14px}
+    .legend,.admin,.invoice-grid,.request-grid,.card-grid{display:grid;gap:8px}
+    .legend{margin-top:12px}
     .tag{display:flex;align-items:center;gap:8px}
     .box{width:18px;height:18px;border-radius:4px;border:1px solid #94a3b8}
-    .admin{margin-top:14px;border-top:1px solid #e5e7eb;padding-top:14px}
+    .admin{margin-top:10px;border-top:1px solid #e5e7eb;padding-top:10px}
     .admin-locked{display:none}
-    button{padding:11px 14px;border:0;border-radius:10px;background:var(--blue);color:white;font-weight:bold;cursor:pointer}
+    button{padding:9px 12px;border:0;border-radius:9px;background:var(--blue);color:white;font-weight:bold;cursor:pointer;font-size:13px}
     button:hover{filter:brightness(.97)}
     .smallbtn{background:var(--muted)}
     .greenbtn{background:var(--ok)}
     .danger{background:var(--danger)}
-    .invoice-box{margin-top:18px}
-    .invoice-grid,.request-grid{grid-template-columns:repeat(2,minmax(220px,1fr))}
+    .invoice-box{margin-top:12px}
+    .invoice-grid,.request-grid{grid-template-columns:repeat(2,minmax(180px,1fr))}
     .invoice-grid textarea,.request-grid textarea,.request-grid .full,.invoice-grid .full{grid-column:1/-1}
     .invoice-preview{
       background:linear-gradient(180deg,#ffffff,#f8fafc);
       border:1px solid #dbe2ea;
-      border-radius:16px;
-      padding:18px;
-      margin-top:14px;
+      border-radius:14px;
+      padding:14px;
+      margin-top:10px;
     }
     .invoice-preview-header,.invoice-meta,.invoice-lines,.request-item-head{display:grid;gap:10px}
     .invoice-preview-header{grid-template-columns:1.4fr .8fr;align-items:start}
-    .invoice-brand{padding:14px;border-radius:14px;background:linear-gradient(135deg,#eff6ff,#f8fafc)}
-    .invoice-kpi{padding:14px;border-radius:14px;background:var(--sand);border:1px solid #eadfcb}
-    .invoice-meta{grid-template-columns:repeat(3,minmax(0,1fr));margin:14px 0}
-    .invoice-card{padding:12px;border-radius:12px;background:#f8fafc;border:1px solid #e2e8f0}
-    .invoice-lines{margin-top:10px}
-    .invoice-line{display:grid;grid-template-columns:1.5fr .8fr .6fr;gap:12px;padding:10px 0;border-bottom:1px solid #e5e7eb}
-    .invoice-total{display:flex;justify-content:space-between;align-items:center;padding-top:14px;font-size:18px;font-weight:bold}
-    .public-area,.admin-area{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:18px}
-    .public-box p,.admin-box p{margin:0 0 12px}
-    .request-list{display:grid;gap:12px}
+    .invoice-brand{padding:12px;border-radius:12px;background:linear-gradient(135deg,#eff6ff,#f8fafc)}
+    .invoice-kpi{padding:12px;border-radius:12px;background:var(--sand);border:1px solid #eadfcb}
+    .invoice-meta{grid-template-columns:repeat(3,minmax(0,1fr));margin:10px 0}
+    .invoice-card{padding:10px;border-radius:10px;background:#f8fafc;border:1px solid #e2e8f0}
+    .invoice-lines{margin-top:8px}
+    .invoice-line{display:grid;grid-template-columns:1.5fr .8fr .6fr;gap:10px;padding:8px 0;border-bottom:1px solid #e5e7eb}
+    .invoice-total{display:flex;justify-content:space-between;align-items:center;padding-top:10px;font-size:16px;font-weight:bold}
+    .public-area,.admin-area{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
+    .public-box p,.admin-box p{margin:0 0 8px}
+    .request-list{display:grid;gap:10px}
     .request-item{
       border:1px solid #dbe2ea;
-      border-radius:14px;
-      padding:14px;
+      border-radius:12px;
+      padding:12px;
       background:#fbfdff;
     }
     .status-pill{
@@ -166,28 +166,28 @@
     .status-pill.handled{background:#dcfce7;color:#166534}
     .status-pill.new{background:#ffedd5;color:#9a3412}
     .status-pill.open{background:#dbeafe;color:#1d4ed8}
-    .request-item dl{display:grid;grid-template-columns:140px 1fr;gap:6px 12px;margin:12px 0 0}
+    .request-item dl{display:grid;grid-template-columns:120px 1fr;gap:4px 10px;margin:10px 0 0;font-size:14px}
     .request-item dt{font-weight:bold}
     .request-item dd{margin:0}
     .empty-state{
       border:1px dashed #cbd5e1;
       border-radius:14px;
-      padding:16px;
+      padding:12px;
       background:#f8fafc;
       color:var(--muted);
     }
-    .fineprint{font-size:13px;color:var(--muted)}
+    .fineprint{font-size:12px;color:var(--muted)}
     @media(max-width:1100px){
       .wrap,.public-area,.admin-area{grid-template-columns:1fr}
       .panel{position:relative}
     }
     @media(max-width:1000px){
-      .map{min-height:auto;padding:16px}
+      .map{min-height:auto;padding:14px}
       .land{position:relative;width:100%;height:88px;border-right:0;border-bottom:8px solid #b7a17a;border-radius:12px;margin-bottom:18px}
       .road{left:26px;width:88px}
       .label-land{top:18px}
-      .pier{margin-left:0;min-width:max-content;padding-left:116px}
-      .slip{width:36px}
+      .pier{margin-left:0;min-width:max-content;padding-left:104px}
+      .slip{width:34px;height:60px}
       .dock:before{width:55px;left:-55px}
       .pier-label{left:0;top:-18px;transform:none;font-size:14px}
       .invoice-grid,.request-grid,.invoice-meta,.invoice-preview-header{grid-template-columns:1fr}
@@ -217,7 +217,7 @@
   </div>
 
   <div class="top">
-    <input id="search" placeholder="Sök plats eller namn">
+    <input id="search" placeholder="Sök plats, namn, e-post eller adress">
     <select id="pierFilter">
       <option value="">Alla bryggor</option>
       <option>A</option>
@@ -379,8 +379,8 @@ const LOCAL_STORAGE_KEY = 'marumVisualSlips_local_v1';
 const LOCAL_INVOICE_KEY = 'marumInvoiceSettings_local_v1';
 const LOCAL_APPLICATIONS_KEY = 'marumApplications_local_v1';
 const LOCAL_TERMINATIONS_KEY = 'marumTerminations_local_v1';
-const ADMIN_PASSWORD = 'marum2026';
 const ADMIN_AUTH_KEY = 'marumAdminLoggedIn_v1';
+const ADMIN_PASSWORD_KEY = 'marumAdminPassword_v1';
 
 let db = null;
 let cloudEnabled = false;
@@ -498,10 +498,10 @@ async function init(){
 }
 
 function loadLocal(){
-  try{slips = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || 'null') || cloneData(defaultSlips);}catch{slips = cloneData(defaultSlips);}
-  try{invoiceSettings = Object.assign(defaultInvoiceSettings(), JSON.parse(localStorage.getItem(LOCAL_INVOICE_KEY) || 'null') || {});}catch{invoiceSettings = defaultInvoiceSettings();}
-  try{applications = JSON.parse(localStorage.getItem(LOCAL_APPLICATIONS_KEY) || 'null') || [];}catch{applications = [];}
-  try{terminations = JSON.parse(localStorage.getItem(LOCAL_TERMINATIONS_KEY) || 'null') || [];}catch{terminations = [];}
+  try{slips = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || 'null') || cloneData(defaultSlips);}catch(error){slips = cloneData(defaultSlips);}
+  try{invoiceSettings = Object.assign(defaultInvoiceSettings(), JSON.parse(localStorage.getItem(LOCAL_INVOICE_KEY) || 'null') || {});}catch(error){invoiceSettings = defaultInvoiceSettings();}
+  try{applications = JSON.parse(localStorage.getItem(LOCAL_APPLICATIONS_KEY) || '[]');}catch(error){applications = [];}
+  try{terminations = JSON.parse(localStorage.getItem(LOCAL_TERMINATIONS_KEY) || '[]');}catch(error){terminations = [];}
 }
 
 function saveLocal(){
@@ -521,8 +521,8 @@ function subscribeCloud(){
     slips = cloneData(defaultSlips).map(base => Object.assign({email:'',phone:'',address:'',postal:'',paid:false,invoiceSent:false,note:''}, base, cloudByPlace.get(Number(base.place)) || {}));
     render();
     if(selected) selectSlip(selected.place);
-  }, err => {
-    console.error(err);
+  }, error => {
+    console.error(error);
     document.getElementById('cloudStatus').textContent = 'Cloud fel - kontrollera Firestore-regler';
     loadLocal();
     renderAll();
@@ -535,72 +535,71 @@ function subscribeCloud(){
   });
 
   onSnapshot(collection(db,'applications'), snap => {
-    applications = sortNewest(snap.docs.map(d => Object.assign(defaultRequestFields(), { id:d.id }, d.data())));
+    applications = snap.docs.map(d => Object.assign(defaultRequestFields(), d.data()));
+    renderApplications();
+  }, error => {
+    console.error(error);
+    loadLocal();
     renderApplications();
   });
 
   onSnapshot(collection(db,'terminations'), snap => {
-    terminations = sortNewest(snap.docs.map(d => Object.assign(defaultRequestFields(), { id:d.id }, d.data())));
+    terminations = snap.docs.map(d => Object.assign(defaultRequestFields(), d.data()));
+    renderTerminations();
+  }, error => {
+    console.error(error);
+    loadLocal();
     renderTerminations();
   });
 }
 
 async function saveSlip(slip){
-  const cleanSlip = cleanSlipForSave(slip);
-  if(cloudEnabled){
-    await setDoc(doc(db,'slips',String(cleanSlip.place)), cleanSlip, { merge:true });
-  }else{
-    const idx = slips.findIndex(item => Number(item.place) === Number(cleanSlip.place));
-    if(idx === -1) slips.push(cleanSlip); else slips[idx] = cleanSlip;
+  if(cloudEnabled) await setDoc(doc(db,'slips', String(slip.place)), slip, {merge:true});
+  else{
     saveLocal();
     render();
   }
 }
 
 async function saveInvoiceSettingsToStore(){
-  if(cloudEnabled){
-    await setDoc(doc(db,'settings','invoice'), invoiceSettings, { merge:true });
-  }else{
-    saveLocal();
-  }
+  if(cloudEnabled) await setDoc(doc(db,'settings','invoice'), invoiceSettings, {merge:true});
+  else saveLocal();
 }
 
 async function saveApplicationRecord(record){
-  if(cloudEnabled){
-    await setDoc(doc(db,'applications',record.id), record, { merge:true });
-  }else{
-    const idx = applications.findIndex(item => item.id === record.id);
-    if(idx === -1) applications.unshift(record); else applications[idx] = record;
-    saveLocal();
-    renderApplications();
-  }
-}
-
-async function deleteApplicationRecord(id){
-  if(cloudEnabled){
-    await deleteDoc(doc(db,'applications',id));
-  }else{
-    applications = applications.filter(item => item.id !== id);
+  if(cloudEnabled) await setDoc(doc(db,'applications', record.id), record, {merge:true});
+  else{
+    const index = applications.findIndex(item => item.id === record.id);
+    if(index >= 0) applications.splice(index, 1, record);
+    else applications.push(record);
     saveLocal();
     renderApplications();
   }
 }
 
 async function saveTerminationRecord(record){
-  if(cloudEnabled){
-    await setDoc(doc(db,'terminations',record.id), record, { merge:true });
-  }else{
-    const idx = terminations.findIndex(item => item.id === record.id);
-    if(idx === -1) terminations.unshift(record); else terminations[idx] = record;
+  if(cloudEnabled) await setDoc(doc(db,'terminations', record.id), record, {merge:true});
+  else{
+    const index = terminations.findIndex(item => item.id === record.id);
+    if(index >= 0) terminations.splice(index, 1, record);
+    else terminations.push(record);
     saveLocal();
     renderTerminations();
   }
 }
 
+async function deleteApplicationRecord(id){
+  if(cloudEnabled) await deleteDoc(doc(db,'applications', id));
+  else{
+    applications = applications.filter(item => item.id !== id);
+    saveLocal();
+    renderApplications();
+  }
+}
+
 async function deleteTerminationRecord(id){
-  if(cloudEnabled){
-    await deleteDoc(doc(db,'terminations',id));
-  }else{
+  if(cloudEnabled) await deleteDoc(doc(db,'terminations', id));
+  else{
     terminations = terminations.filter(item => item.id !== id);
     saveLocal();
     renderTerminations();
@@ -612,8 +611,8 @@ async function seedCloudData(){
   if(!cloudEnabled){alert('Cloud är inte aktiverat.');return;}
   if(!confirm('Initiera cloud-data? Detta skriver grundmallen till Firestore.')) return;
   const batch = writeBatch(db);
-  defaultSlips.forEach(s => batch.set(doc(db,'slips',String(s.place)), s, { merge:true }));
-  batch.set(doc(db,'settings','invoice'), invoiceSettings, { merge:true });
+  defaultSlips.forEach(s => batch.set(doc(db,'slips', String(s.place)), s, {merge:true}));
+  batch.set(doc(db,'settings','invoice'), invoiceSettings, {merge:true});
   await batch.commit();
   alert('Cloud-data initierad.');
 }
@@ -657,44 +656,71 @@ function getSlipByPlace(place){
 }
 
 function cleanSlipForSave(slip){
-  const base = defaultSlips.find(item => Number(item.place) === Number(slip.place)) || {};
-  return Object.assign(
-    {email:'',phone:'',address:'',postal:'',paid:false,invoiceSent:false,note:''},
-    base,
-    slip,
-    { place:Number(slip.place || base.place), pier:slip.pier || base.pier, side:slip.side || base.side, status:slip.status || base.status || 'Okänd' }
-  );
+  const base = defaultSlips.find(item => Number(item.place) === Number(slip.place));
+  return Object.assign({
+    pier: base ? base.pier : '',
+    side: base ? base.side : '',
+    place: base ? base.place : slip.place,
+    name:'', status:'Okänd', email:'', phone:'', address:'', postal:'', paid:false, invoiceSent:false, note:''
+  }, slip);
 }
 
 function availableSlips(){
   return slips
-    .filter(s => ['Ledig','Okänd'].includes(s.status) && s.status !== 'Ej tillgänglig')
-    .sort((a,b) => {
-      const rank = status => status === 'Ledig' ? 0 : 1;
-      return rank(a.status) - rank(b.status) || String(a.pier).localeCompare(String(b.pier)) || Number(a.place) - Number(b.place);
-    });
+    .filter(s => ['Ledig','Okänd'].includes(s.status))
+    .slice()
+    .sort((a,b) => Number(a.place) - Number(b.place));
 }
 
 function recommendedSlipForApplication(){
   return availableSlips()[0] || null;
 }
 
-function makeSlipEl(slip,bottom){
+function makeSlipEl(s, bottom){
   const el = document.createElement('div');
-  el.className = 'slip ' + (bottom ? 'bottom ' : '') + (slip.status === 'Gästplats' ? 'guest ' : '') + (slip.status !== 'Uthyrd' ? 'empty' : '');
-  el.title = 'Plats ' + slip.place + ' - ' + (slip.name || 'ingen hyresgäst');
-  el.innerHTML = '<span class="nr">' + slip.place + '</span>' + (slip.status === 'Uthyrd' ? '<span class="boat ' + (slip.paid ? 'paid' : '') + '"></span>' : '') + (slip.invoiceSent ? '<span class="invoice-dot" title="Faktura skickad"></span>' : '');
-  el.onclick = () => selectSlip(slip.place);
+  el.className = 'slip ' + (bottom ? 'bottom ' : '') + (s.status === 'Gästplats' ? 'guest ' : '') + (s.status !== 'Uthyrd' ? 'empty' : '');
+  el.title = 'Plats ' + s.place + ' - ' + (s.name || 'ingen hyresgäst');
+  el.innerHTML = '<span class="nr">' + s.place + '</span>' + (s.status === 'Uthyrd' ? '<span class="boat ' + (s.paid ? 'paid' : '') + '"></span>' : '') + (s.invoiceSent ? '<span class="invoice-dot" title="Faktura skickad"></span>' : '');
+  el.onclick = () => selectSlip(s.place);
   return el;
+}
+
+function blankSlip(){
+  const el = document.createElement('div');
+  el.className = 'slip empty';
+  el.style.visibility = 'hidden';
+  return el;
+}
+
+function renderNormalPier(pier, arr){
+  const top = pier.querySelector('.topSide');
+  const bottom = pier.querySelector('.bottomSide');
+  arr.filter(s => s.side === 'Sida 1').sort((a,b)=>a.place-b.place).forEach(s => top.appendChild(makeSlipEl(s,false)));
+  arr.filter(s => s.side === 'Sida 2').sort((a,b)=>a.place-b.place).forEach(s => bottom.appendChild(makeSlipEl(s,true)));
+}
+
+function renderPierC(pier, arr){
+  pier.style.maxWidth = '760px';
+  const top = pier.querySelector('.topSide');
+  const bottom = pier.querySelector('.bottomSide');
+  const byPlace = new Map(arr.map(s => [s.place, s]));
+  top.style.display = bottom.style.display = 'grid';
+  top.style.gridTemplateColumns = bottom.style.gridTemplateColumns = 'repeat(16,38px)';
+  top.style.width = bottom.style.width = 'max-content';
+  top.style.gap = bottom.style.gap = '6px';
+  for(let odd=201; odd<=231; odd+=2){
+    const even = odd + 1;
+    top.appendChild(byPlace.get(even) ? makeSlipEl(byPlace.get(even), false) : blankSlip());
+    bottom.appendChild(byPlace.get(odd) ? makeSlipEl(byPlace.get(odd), true) : blankSlip());
+  }
 }
 
 function render(){
   const map = document.getElementById('map');
-  map.querySelectorAll('.pier').forEach(e => e.remove());
+  map.querySelectorAll('.pier').forEach(el => el.remove());
   const q = document.getElementById('search').value.toLowerCase();
   const pf = document.getElementById('pierFilter').value;
   const sf = document.getElementById('statusFilter').value;
-
   ['A','B','C'].forEach(p => {
     if(pf && pf !== p) return;
     const arr = slips.filter(s => {
@@ -712,42 +738,15 @@ function render(){
   });
 }
 
-function renderNormalPier(pier,arr){
-  const top = pier.querySelector('.topSide');
-  const bottom = pier.querySelector('.bottomSide');
-  arr.filter(s=>s.side==='Sida 1').sort((a,b)=>a.place-b.place).forEach(s=>top.appendChild(makeSlipEl(s,false)));
-  arr.filter(s=>s.side==='Sida 2').sort((a,b)=>a.place-b.place).forEach(s=>bottom.appendChild(makeSlipEl(s,true)));
-}
-
-function renderPierC(pier,arr){
-  pier.style.maxWidth = '760px';
-  const top = pier.querySelector('.topSide');
-  const bottom = pier.querySelector('.bottomSide');
-  const byPlace = new Map(arr.map(s => [s.place, s]));
-  top.style.display = bottom.style.display = 'grid';
-  top.style.gridTemplateColumns = bottom.style.gridTemplateColumns = 'repeat(16,42px)';
-  top.style.width = bottom.style.width = 'max-content';
-  top.style.gap = bottom.style.gap = '7px';
-  for(let odd = 201; odd <= 231; odd += 2){
-    const even = odd + 1;
-    top.appendChild(byPlace.get(even) ? makeSlipEl(byPlace.get(even), false) : blankSlip());
-    bottom.appendChild(byPlace.get(odd) ? makeSlipEl(byPlace.get(odd), true) : blankSlip());
-  }
-}
-
-function blankSlip(){
-  const el = document.createElement('div');
-  el.className = 'slip empty';
-  el.style.visibility = 'hidden';
-  return el;
-}
-
 function clearSelection(){
   selected = null;
   document.getElementById('pNo').textContent = '-';
   document.getElementById('pText').textContent = 'Klicka på en plats i kartan.';
   document.getElementById('detail').innerHTML = '';
-  ['editName','editEmail','editPhone','editAddress','editPostal','editNote'].forEach(id => document.getElementById(id).value = '');
+  ['editName','editEmail','editPhone','editAddress','editPostal','editNote'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.value = '';
+  });
   document.getElementById('editPaid').value = 'false';
 }
 
@@ -757,11 +756,9 @@ function selectSlip(place){
   selected = found;
   document.getElementById('pNo').textContent = selected.place;
   document.getElementById('pText').textContent = 'Brygga ' + selected.pier + ' - ' + selected.side;
-  if(isAdmin){
-    document.getElementById('detail').innerHTML = '<b>Hyresgäst:</b> ' + escapeHtml(selected.name||'-') + '<br><b>E-post:</b> ' + escapeHtml(selected.email||'-') + '<br><b>Telefon:</b> ' + escapeHtml(selected.phone||'-') + '<br><b>Adress:</b> ' + escapeHtml(selected.address||'-') + '<br><b>Post/ort:</b> ' + escapeHtml(selected.postal||'-') + '<br><b>Status:</b> ' + escapeHtml(selected.status) + '<br><b>Faktura:</b> ' + (selected.paid?'Betald':'Ej betald') + '<br><b>Faktura skickad:</b> ' + (selected.invoiceSent?'Ja':'Nej') + '<br><b>Anteckning:</b> ' + escapeHtml(selected.note||'-');
-  }else{
-    document.getElementById('detail').innerHTML = '<b>Hyresgäst:</b> ' + escapeHtml(selected.name||'-');
-  }
+  document.getElementById('detail').innerHTML = isAdmin
+    ? '<b>Hyresgäst:</b> ' + escapeHtml(selected.name || '-') + '<br><b>E-post:</b> ' + escapeHtml(selected.email || '-') + '<br><b>Telefon:</b> ' + escapeHtml(selected.phone || '-') + '<br><b>Adress:</b> ' + escapeHtml(selected.address || '-') + '<br><b>Post/ort:</b> ' + escapeHtml(selected.postal || '-') + '<br><b>Status:</b> ' + escapeHtml(selected.status) + '<br><b>Faktura:</b> ' + (selected.paid ? 'Betald' : 'Ej betald') + '<br><b>Faktura skickad:</b> ' + (selected.invoiceSent ? 'Ja' : 'Nej') + '<br><b>Anteckning:</b> ' + escapeHtml(selected.note || '-')
+    : '<b>Hyresgäst:</b> ' + escapeHtml(selected.name || '-') + '<br><b>Status:</b> ' + escapeHtml(selected.status);
   document.getElementById('editName').value = selected.name || '';
   document.getElementById('editStatus').value = selected.status;
   document.getElementById('editEmail').value = selected.email || '';
@@ -770,7 +767,6 @@ function selectSlip(place){
   document.getElementById('editPostal').value = selected.postal || '';
   document.getElementById('editPaid').value = String(Boolean(selected.paid));
   document.getElementById('editNote').value = selected.note || '';
-  previewInvoiceTemplate();
 }
 
 async function saveSelected(){
@@ -784,7 +780,7 @@ async function saveSelected(){
   selected.postal = document.getElementById('editPostal').value.trim();
   selected.paid = document.getElementById('editPaid').value === 'true';
   selected.note = document.getElementById('editNote').value.trim();
-  await saveSlip(selected);
+  await saveSlip(cleanSlipForSave(selected));
   if(!cloudEnabled) selectSlip(selected.place);
 }
 
@@ -815,20 +811,19 @@ async function saveInvoiceSettings(){
   alert('Fakturamallen är sparad.');
 }
 
-function buildInvoiceModel(slip, overrides){
-  const issueDate = new Date();
-  const dueDays = parseDueDays(overrides?.due || invoiceSettings.due || '30');
-  const dueDate = addDays(issueDate, dueDays);
-  const amount = overrides?.amount || invoiceSettings.amount || '2500 kr';
-  const invoiceNumber = `${invoiceSettings.referencePrefix || 'MB'}-${issueDate.getFullYear()}-${String(slip.place).padStart(3,'0')}-${String(issueDate.getMonth()+1).padStart(2,'0')}${String(issueDate.getDate()).padStart(2,'0')}`;
+function buildInvoiceModel(slip, overrides={}){
+  const issueDate = overrides.issueDate ? new Date(overrides.issueDate) : new Date();
+  const dueDays = parseDueDays(overrides.due || invoiceSettings.due || 30);
+  const dueDate = overrides.dueDate ? new Date(overrides.dueDate) : addDays(issueDate, dueDays);
+  const issueDateSv = formatDateSv(issueDate);
+  const dueDateSv = formatDateSv(dueDate);
+  const invoiceNumber = `${(invoiceSettings.referencePrefix || 'MB').toUpperCase()}-${String(slip.place).padStart(3,'0')}-${String(issueDate.getFullYear()).slice(-2)}${String(issueDate.getMonth()+1).padStart(2,'0')}${String(issueDate.getDate()).padStart(2,'0')}`;
   return {
     slip,
-    amount,
+    amount: overrides.amount || invoiceSettings.amount || '',
+    issueDateSv,
+    dueDateSv,
     invoiceNumber,
-    issueDate,
-    issueDateSv: formatDateSv(issueDate),
-    dueDate,
-    dueDateSv: formatDateSv(dueDate),
     sender: invoiceSettings.sender || 'Marums samfällighet',
     senderEmail: invoiceSettings.senderEmail || '',
     bankgiro: invoiceSettings.bankgiro || '-',
@@ -1062,10 +1057,8 @@ function renderRequestList(list, containerId, type){
     container.innerHTML = '<div class="empty-state">Inga poster ännu.</div>';
     return;
   }
-  const freeOptions = availableSlips().map(s => `<option value="${escapeAttr(s.place)}">${escapeHtml(s.place)} - Brygga ${escapeHtml(s.pier)} (${escapeHtml(s.status)})</option>`).join('');
   container.innerHTML = list.map(item => {
     const statusClass = item.handled ? 'handled' : 'new';
-    const recommendation = recommendedSlipForApplication();
     const detailRows = type === 'application' ? [
       ['Datum', formatDateSv(new Date(item.createdAt))],
       ['Namn', item.name],
@@ -1075,8 +1068,6 @@ function renderRequestList(list, containerId, type){
       ['Båttyp', item.boatType || '-'],
       ['Längd', item.boatLength || '-'],
       ['Bredd', item.boatWidth || '-'],
-      ['Rekommenderad plats', recommendation ? `${recommendation.place} - Brygga ${recommendation.pier} (${recommendation.status})` : 'Ingen ledig plats hittad'],
-      ['Tilldelad plats', item.assignedPlace || '-'],
       ['Övrigt', item.note || '-']
     ] : [
       ['Datum', formatDateSv(new Date(item.createdAt))],
@@ -1085,25 +1076,9 @@ function renderRequestList(list, containerId, type){
       ['Telefon', item.phone || '-'],
       ['Båtplats', item.place || '-'],
       ['Slutdatum', item.moveOutDate || '-'],
-      ['Friställningsdatum', item.releaseDate || '-'],
       ['Meddelande', item.reason || '-']
     ];
-    const actions = isAdmin && type === 'application'
-      ? `<div class="cta-row stack-actions" style="margin-top:12px">
-          <select id="assign-${escapeAttr(item.id)}">${freeOptions}</select>
-          <button type="button" class="greenbtn" onclick="assignApplicationSlip('${escapeAttr(item.id)}')">Tilldela vald plats</button>
-          ${recommendation ? `<button type="button" class="smallbtn" onclick="assignApplicationSlip('${escapeAttr(item.id)}','${escapeAttr(recommendation.place)}')">Välj rekommenderad ${escapeHtml(recommendation.place)}</button>` : ''}
-          <button type="button" class="${item.handled ? 'smallbtn' : 'greenbtn'}" onclick="toggleApplicationHandled('${escapeAttr(item.id)}')">${item.handled ? 'Markera som ny' : 'Markera som hanterad'}</button>
-          <button type="button" class="danger" onclick="deleteApplication('${escapeAttr(item.id)}')">Radera ansökan</button>
-        </div>`
-      : isAdmin
-        ? `<div class="cta-row stack-actions" style="margin-top:12px">
-            <input id="release-${escapeAttr(item.id)}" type="date" value="${escapeAttr(item.releaseDate || item.moveOutDate || '')}">
-            <button type="button" class="greenbtn" onclick="releaseTerminationSlip('${escapeAttr(item.id)}')">Friställ på datum</button>
-            <button type="button" class="${item.handled ? 'smallbtn' : 'greenbtn'}" onclick="toggleTerminationHandled('${escapeAttr(item.id)}')">${item.handled ? 'Markera som ny' : 'Markera som hanterad'}</button>
-            <button type="button" class="danger" onclick="deleteTermination('${escapeAttr(item.id)}')">Radera uppsägning</button>
-          </div>`
-        : '';
+    const actions = isAdmin ? `<div class="cta-row" style="margin-top:12px"><button type="button" class="${item.handled ? 'smallbtn' : 'greenbtn'}" onclick="${type === 'application' ? 'toggleApplicationHandled' : 'toggleTerminationHandled'}('${item.id}')">${item.handled ? 'Markera som ny' : 'Markera som hanterad'}</button></div>` : '';
     return `<div class="request-item"><div class="request-item-head"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><b>${escapeHtml(item.name || '-')}</b><span class="status-pill ${statusClass}">${escapeHtml(item.handled ? 'Hanterad' : 'Ny')}</span></div></div><dl>${detailRows.map(row => `<dt>${escapeHtml(row[0])}</dt><dd>${escapeHtml(row[1])}</dd>`).join('')}</dl>${actions}</div>`;
   }).join('');
 }
@@ -1125,6 +1100,84 @@ async function toggleTerminationHandled(id){
   record.handled = !record.handled;
   record.status = record.handled ? 'Hanterad' : 'Ny';
   await saveTerminationRecord(record);
+}
+
+function runTests(){
+  console.assert(defaultSlips.some(s=>s.pier==='C'&&s.place===201),'Test: Brygga C ska innehålla plats 201');
+  console.assert(defaultSlips.some(s=>s.pier==='C'&&s.place===232),'Test: Brygga C ska innehålla plats 232');
+  console.assert(defaultSlips.filter(s=>s.pier==='C').length===32,'Test: Brygga C ska ha 32 platser');
+  console.assert(defaultSlips.find(s=>s.place===201).side==='Sida 1','Test: 201 ska vara på Sida 1');
+  console.assert(defaultSlips.find(s=>s.place===202).side==='Sida 2','Test: 202 ska vara på Sida 2');
+  console.assert(Object.prototype.hasOwnProperty.call(defaultSlips[0], 'phone'),'Test: båtplats ska ha telefonfält');
+  console.assert(buildInvoiceModel(defaultSlips[0], { amount:'1000 kr', due:'30' }).invoiceNumber.includes('MB'),'Test: fakturanummer ska skapas');
+  console.assert(applyInvoiceTemplate('Telefon {telefon}', Object.assign({}, defaultSlips[0], { phone:'0701234567' }), '1000 kr', '2026-06-30', 'MB-1', '2026-05-27').includes('0701234567'),'Test: fakturamall ska kunna skriva ut telefonnummer');
+  console.assert(Array.isArray(applications) && Array.isArray(terminations),'Test: ansökningar och uppsägningar ska vara listor');
+  const merged = cloneData(defaultSlips).map(base => Object.assign({}, base, new Map([[1,{place:1,name:'Test'}]]).get(Number(base.place)) || {}));
+  console.assert(merged.length === defaultSlips.length,'Test: cloud-data ska mergas med grundmallen');
+}
+
+function renderRequestList(list, containerId, type){
+  const container = document.getElementById(containerId);
+  if(!list.length){
+    container.innerHTML = '<div class="empty-state">Inga poster än så länge.</div>';
+    return;
+  }
+  const recommendation = recommendedSlipForApplication();
+  const freeOptions = availableSlips().map(s => `<option value="${escapeAttr(s.place)}">${escapeHtml(s.place)} - Brygga ${escapeHtml(s.pier)} (${escapeHtml(s.status)})</option>`).join('');
+  container.innerHTML = list.map(item => {
+    const statusClass = item.handled ? 'handled' : 'new';
+    const detailRows = type === 'application' ? [
+      ['Datum', formatDateSv(new Date(item.createdAt))],
+      ['Namn', item.name],
+      ['E-post', item.email],
+      ['Telefon', item.phone || '-'],
+      ['Adress', item.address || '-'],
+      ['Båttyp', item.boatType || '-'],
+      ['Längd', item.boatLength || '-'],
+      ['Bredd', item.boatWidth || '-'],
+      ['Rekommenderad plats', recommendation ? `${recommendation.place} - Brygga ${recommendation.pier}` : 'Ingen ledig plats hittad'],
+      ['Tilldelad plats', item.assignedPlace || '-'],
+      ['Övrigt', item.note || '-']
+    ] : [
+      ['Datum', formatDateSv(new Date(item.createdAt))],
+      ['Namn', item.name],
+      ['E-post', item.email],
+      ['Telefon', item.phone || '-'],
+      ['Båtplats', item.place || '-'],
+      ['Slutdatum', item.moveOutDate || '-'],
+      ['Friställningsdatum', item.releaseDate || '-'],
+      ['Meddelande', item.reason || '-']
+    ];
+    let actions = '';
+    if(isAdmin && type === 'application'){
+      actions = `<div class="stack-actions" style="margin-top:12px">
+        <div class="cta-row">
+          <select id="assign-${escapeAttr(item.id)}">
+            <option value="">Välj ledig plats</option>
+            ${freeOptions}
+          </select>
+          <button type="button" class="greenbtn" onclick="assignApplicationSlip('${escapeAttr(item.id)}')">Tilldela plats</button>
+        </div>
+        <div class="cta-row">
+          <button type="button" class="smallbtn" onclick="assignApplicationSlip('${escapeAttr(item.id)}','${escapeAttr(item.assignedPlace || (recommendation ? recommendation.place : ''))}')">Använd rekommenderad plats</button>
+          <button type="button" class="${item.handled ? 'smallbtn' : 'greenbtn'}" onclick="toggleApplicationHandled('${escapeAttr(item.id)}')">${item.handled ? 'Markera som ny' : 'Markera som hanterad'}</button>
+          <button type="button" class="danger" onclick="deleteApplication('${escapeAttr(item.id)}')">Radera</button>
+        </div>
+      </div>`;
+    }else if(isAdmin && type === 'termination'){
+      actions = `<div class="stack-actions" style="margin-top:12px">
+        <div class="cta-row">
+          <input id="release-${escapeAttr(item.id)}" type="date" value="${escapeAttr(item.releaseDate || item.moveOutDate || '')}">
+          <button type="button" class="greenbtn" onclick="releaseTerminationSlip('${escapeAttr(item.id)}')">Friställ plats</button>
+        </div>
+        <div class="cta-row">
+          <button type="button" class="${item.handled ? 'smallbtn' : 'greenbtn'}" onclick="toggleTerminationHandled('${escapeAttr(item.id)}')">${item.handled ? 'Markera som ny' : 'Markera som hanterad'}</button>
+          <button type="button" class="danger" onclick="deleteTermination('${escapeAttr(item.id)}')">Radera</button>
+        </div>
+      </div>`;
+    }
+    return `<div class="request-item"><div class="request-item-head"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><b>${escapeHtml(item.name || '-')}</b><span class="status-pill ${statusClass}">${escapeHtml(item.handled ? 'Hanterad' : 'Ny')}</span></div></div><dl>${detailRows.map(row => `<dt>${escapeHtml(row[0])}</dt><dd>${escapeHtml(row[1])}</dd>`).join('')}</dl>${actions}</div>`;
+  }).join('');
 }
 
 async function deleteApplication(id){
@@ -1184,8 +1237,20 @@ async function releaseTerminationSlip(id){
   today.setHours(0,0,0,0);
   const shouldReleaseNow = !Number.isNaN(releaseDate.getTime()) && releaseDate <= today;
   const updatedSlip = shouldReleaseNow
-    ? cleanSlipForSave(Object.assign({}, slip, { name:'', email:'', phone:'', address:'', postal:'', status:'Ledig', paid:false, invoiceSent:false, note:`Friställd ${date}` }))
-    : cleanSlipForSave(Object.assign({}, slip, { note:[slip.note, `Friställs ${date}`].filter(Boolean).join(' | ') }));
+    ? cleanSlipForSave(Object.assign({}, slip, {
+      name:'',
+      email:'',
+      phone:'',
+      address:'',
+      postal:'',
+      status:'Ledig',
+      paid:false,
+      invoiceSent:false,
+      note:`Friställd ${date}`
+    }))
+    : cleanSlipForSave(Object.assign({}, slip, {
+      note:[slip.note, `Friställs ${date}`].filter(Boolean).join(' | ')
+    }));
   await saveSlip(updatedSlip);
   record.releaseDate = date;
   record.handled = true;
@@ -1204,11 +1269,54 @@ function runTests(){
   console.assert(Object.prototype.hasOwnProperty.call(defaultSlips[0], 'phone'),'Test: båtplats ska ha telefonfält');
   console.assert(buildInvoiceModel(defaultSlips[0], { amount:'1000 kr', due:'30' }).invoiceNumber.includes('MB'),'Test: fakturanummer ska skapas');
   console.assert(applyInvoiceTemplate('Telefon {telefon}', Object.assign({}, defaultSlips[0], { phone:'0701234567' }), '1000 kr', '2026-06-30', 'MB-1', '2026-05-27').includes('0701234567'),'Test: fakturamall ska kunna skriva ut telefonnummer');
+  console.assert(cleanSlipForSave({place:1,name:'Test'}).pier === 'A','Test: sparad plats ska behålla brygga från grundmallen');
+  console.assert(Array.isArray(availableSlips()),'Test: lediga platser ska kunna rekommenderas');
   console.assert(Array.isArray(applications) && Array.isArray(terminations),'Test: ansökningar och uppsägningar ska vara listor');
   const merged = cloneData(defaultSlips).map(base => Object.assign({}, base, new Map([[1,{place:1,name:'Test'}]]).get(Number(base.place)) || {}));
   console.assert(merged.length === defaultSlips.length,'Test: cloud-data ska mergas med grundmallen');
-  console.assert(cleanSlipForSave({place:1,name:'Test'}).pier === 'A','Test: sparad plats ska behålla brygga från grundmallen');
-  console.assert(Array.isArray(availableSlips()),'Test: lediga platser ska kunna rekommenderas');
+}
+
+function updateAdminView(){
+  document.querySelectorAll('.admin-locked').forEach(el => {
+    el.style.display = isAdmin ? (el.dataset.adminDisplay || 'block') : 'none';
+  });
+  const passwordConfigured = Boolean(localStorage.getItem(ADMIN_PASSWORD_KEY));
+  document.getElementById('authStatus').textContent = isAdmin ? 'Adminläge aktivt' : (passwordConfigured ? 'Publikt läge' : 'Admin ej konfigurerad');
+  document.getElementById('search').placeholder = isAdmin ? 'Sök plats, namn, e-post, telefon eller adress' : 'Sök plats eller namn';
+  if(selected) selectSlip(selected.place);
+}
+
+function adminLogin(){
+  const field = document.getElementById('adminPassword');
+  const enteredPassword = field.value;
+  const storedPassword = localStorage.getItem(ADMIN_PASSWORD_KEY);
+  if(!storedPassword){
+    if(enteredPassword.trim().length < 6){
+      alert('Ange minst 6 tecken för att skapa ett lokalt administratörslösenord.');
+      return;
+    }
+    localStorage.setItem(ADMIN_PASSWORD_KEY, enteredPassword);
+    isAdmin = true;
+    localStorage.setItem(ADMIN_AUTH_KEY,'true');
+    field.value = '';
+    updateAdminView();
+    alert('Administratörslösenord sparat lokalt i denna webbläsare.');
+    return;
+  }
+  if(enteredPassword === storedPassword){
+    isAdmin = true;
+    localStorage.setItem(ADMIN_AUTH_KEY,'true');
+    field.value = '';
+    updateAdminView();
+  }else{
+    alert('Fel lösenord.');
+  }
+}
+
+function adminLogout(){
+  isAdmin = false;
+  localStorage.removeItem(ADMIN_AUTH_KEY);
+  updateAdminView();
 }
 
 function renderAll(){
@@ -1241,7 +1349,10 @@ Object.assign(window, {
   submitApplication,
   submitTermination,
   toggleApplicationHandled,
-  toggleTerminationHandled,
+  toggleTerminationHandled
+});
+
+Object.assign(window, {
   deleteApplication,
   deleteTermination,
   assignApplicationSlip,
