@@ -318,7 +318,7 @@
 
   <section id="page-invoice" class="page invoice-box">
     <h2>Faktura och PDF</h2>
-    <p class="muted">Skapa en snygg faktura direkt från vald båtplats. PDF-flödet öppnar en utskriftsvänlig faktura som kan sparas som PDF i webbläsaren.</p>
+    <p class="muted">Skapa en snygg faktura direkt från vald båtplats och spara PDF-filen på datorn.</p>
     <div class="invoice-grid">
       <input id="invSender" placeholder="Avsändare / förening">
       <input id="invEmail" placeholder="Avsändarens e-post">
@@ -333,7 +333,7 @@
       <div class="full cta-row">
         <button type="button" onclick="saveInvoiceSettings()">Spara mall och e-post</button>
         <button type="button" class="smallbtn" onclick="previewInvoiceTemplate()">Förhandsvisa faktura</button>
-        <button type="button" class="greenbtn" onclick="createInvoicePdf()">Skapa PDF-faktura</button>
+        <button type="button" class="greenbtn" onclick="createInvoicePdf()">Spara PDF-faktura</button>
         <button type="button" class="smallbtn" onclick="sendInvoiceEmail()">Skicka fakturautkast</button>
         <button type="button" class="smallbtn" onclick="downloadInvoiceCsv()">Exportera fakturalista</button>
         <button type="button" class="smallbtn" onclick="downloadData()">Ladda ner data</button>
@@ -413,7 +413,7 @@
     </section>
   </section>
 
-  <section id="page-settings" class="page admin-box admin-locked" data-admin-display="block">
+  <section id="page-settings" class="page admin-box">
     <h2>Inställningar</h2>
     <p class="muted">Här sparas uppgifter för hamnkapten, administratörer och årsavgifter. Lösenord för admin är marum2026 på alla enheter.</p>
     <div class="invoice-grid">
@@ -487,6 +487,7 @@
 </div>
 <div id="printRoot" class="print-root"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script type="module">
 'use strict';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js';
@@ -1223,6 +1224,51 @@ function openInvoicePrintView(model){
   openPrintableWindow(`Faktura ${model.invoiceNumber}`, bodyHtml, styles, styles + bodyHtml);
 }
 
+function safeFilePart(value){
+  return String(value || '').replace(/[^\wåäöÅÄÖ-]+/g, '-').replace(/^-+|-+$/g, '') || 'faktura';
+}
+
+function saveInvoicePdfFile(model){
+  const jsPdfFactory = window.jspdf && window.jspdf.jsPDF;
+  if(!jsPdfFactory) return false;
+  const doc = new jsPdfFactory({ unit:'mm', format:'a4' });
+  const left = 18;
+  let y = 18;
+  const pageWidth = 210;
+  const contentWidth = pageWidth - left * 2;
+  const addText = (text, size=11, bold=false, gap=6) => {
+    doc.setFont('helvetica', bold ? 'bold' : 'normal');
+    doc.setFontSize(size);
+    const lines = doc.splitTextToSize(String(text || ''), contentWidth);
+    lines.forEach(line => {
+      if(y > 280){
+        doc.addPage();
+        y = 18;
+      }
+      doc.text(line, left, y);
+      y += size * 0.42;
+    });
+    y += gap;
+  };
+  doc.setTextColor(20, 92, 150);
+  addText('Faktura', 24, true, 4);
+  doc.setTextColor(31, 41, 55);
+  addText(model.sender || 'Marums samfällighet', 13, true, 2);
+  addText(model.senderEmail || '', 10, false, 8);
+  addText(`Fakturanummer: ${model.invoiceNumber}`, 11, true, 2);
+  addText(`Fakturadatum: ${model.issueDateSv}`, 11, false, 2);
+  addText(`Förfallodatum: ${model.dueDateSv}`, 11, false, 2);
+  addText(`Båtplats: ${model.slip.place} / Brygga ${model.slip.pier}`, 11, false, 8);
+  addText('Mottagare', 13, true, 2);
+  addText([model.slip.name, model.slip.address, model.slip.postal, model.slip.phone ? `Telefon: ${model.slip.phone}` : ''].filter(Boolean).join('\n'), 11, false, 8);
+  addText(`Båtplatsavgift: ${model.amount}`, 13, true, 3);
+  addText(`Att betala: ${model.amount}`, 15, true, 8);
+  addText(`Bankgiro/Plusgiro: ${model.bankgiro}\nSwish: ${model.swish}`, 11, false, 8);
+  addText(buildInvoiceText(model), 11, false, 0);
+  doc.save(`faktura-${safeFilePart(model.invoiceNumber)}-plats-${safeFilePart(model.slip.place)}.pdf`);
+  return true;
+}
+
 async function markInvoiceSent(model){
   if(!selected) return;
   selected.invoiceSent = true;
@@ -1248,7 +1294,7 @@ async function createInvoicePdf(){
   const model = ensureInvoiceModel();
   if(!model) return;
   await markInvoiceSent(model);
-  openInvoicePrintView(model);
+  if(!saveInvoicePdfFile(model)) openInvoicePrintView(model);
 }
 
 async function sendInvoiceEmail(){
@@ -1264,7 +1310,7 @@ async function sendInvoiceEmail(){
     '',
     buildInvoiceText(model),
     '',
-    'PDF kan skapas direkt från sidan via knappen "Skapa PDF-faktura".'
+    'PDF kan sparas direkt från sidan via knappen "Spara PDF-faktura".'
   ].join('\n');
   openMailDraft(selected.email, subject, intro);
 }
@@ -1863,6 +1909,7 @@ function runTests(){
 
 function updateAdminView(){
   document.querySelectorAll('.admin-locked').forEach(el => {
+    if(el.classList.contains('page')) return;
     el.style.display = isAdmin ? (el.dataset.adminDisplay || 'block') : 'none';
   });
   if(!isAdmin && ['invoice','settings'].includes(currentPage)) setActivePage('overview');
