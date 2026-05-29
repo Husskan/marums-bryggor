@@ -214,6 +214,7 @@
     .request-item dl{display:grid;grid-template-columns:120px 1fr;gap:4px 10px;margin:10px 0 0;font-size:14px}
     .request-item dt{font-weight:bold}
     .request-item dd{margin:0}
+    .assignment-select{min-width:280px;flex:1}
     .settings-list{display:grid;gap:8px;margin-top:10px}
     .settings-list div{padding:8px 10px;border:1px solid #e2e8f0;border-radius:10px;background:#f8fafc}
     .empty-state{
@@ -804,11 +805,38 @@ function availableSlips(){
   return slips
     .filter(s => ['Ledig','Okänd'].includes(s.status))
     .slice()
-    .sort((a,b) => Number(a.place) - Number(b.place));
+    .sort((a,b) => String(a.pier).localeCompare(String(b.pier)) || Number(a.place) - Number(b.place));
 }
 
 function recommendedSlipForApplication(){
   return availableSlips()[0] || null;
+}
+
+function slipSelectLabel(slip, recommendation){
+  const parts = [
+    `Plats ${slip.place}`,
+    slip.side || '',
+    slip.status || ''
+  ].filter(Boolean);
+  if(recommendation && Number(recommendation.place) === Number(slip.place)) parts.push('rekommenderad');
+  return parts.join(' - ');
+}
+
+function renderAvailableSlipOptions(freeSlips, selectedPlace, recommendation){
+  const groups = freeSlips.reduce((map, slip) => {
+    const key = slip.pier || 'Övrigt';
+    if(!map.has(key)) map.set(key, []);
+    map.get(key).push(slip);
+    return map;
+  }, new Map());
+  return Array.from(groups.entries()).map(([pier, pierSlips]) => [
+    `<optgroup label="Brygga ${escapeAttr(pier)}">`,
+    pierSlips.map(slip => {
+      const isSelected = String(slip.place) === selectedPlace;
+      return `<option value="${escapeAttr(slip.place)}" ${isSelected ? 'selected' : ''}>${escapeHtml(slipSelectLabel(slip, recommendation))}</option>`;
+    }).join(''),
+    '</optgroup>'
+  ].join('')).join('');
 }
 
 function makeSlipEl(s, bottom){
@@ -1735,11 +1763,7 @@ function renderRequestList(list, containerId, type){
     const statusClass = item.handled ? 'handled' : 'new';
     const recommendation = type === 'application' ? freeSlips[0] : null;
     const selectedPlace = String(item.assignedPlace || (recommendation ? recommendation.place : ''));
-    const freeOptions = freeSlips.map(s => {
-      const isSelected = String(s.place) === selectedPlace;
-      const label = `${s.place} - Brygga ${s.pier} (${s.status})${recommendation && Number(recommendation.place) === Number(s.place) ? ' - rekommenderad' : ''}`;
-      return `<option value="${escapeAttr(s.place)}" ${isSelected ? 'selected' : ''}>${escapeHtml(label)}</option>`;
-    }).join('');
+    const freeOptions = renderAvailableSlipOptions(freeSlips, selectedPlace, recommendation);
     const detailRows = type === 'application' ? [
       ['Datum', formatDateSv(new Date(item.createdAt))],
       ['Namn', item.name],
@@ -1766,7 +1790,7 @@ function renderRequestList(list, containerId, type){
     if(isAdmin && type === 'application'){
       actions = `<div class="stack-actions" style="margin-top:12px">
         <div class="cta-row">
-          <select id="assign-${escapeAttr(item.id)}">
+          <select id="assign-${escapeAttr(item.id)}" class="assignment-select">
             <option value="">Välj ledig plats</option>
             ${freeOptions}
           </select>
@@ -1977,6 +2001,7 @@ function runTests(){
   console.assert(typeof closeSlipModal === 'function','Test: platsruta ska kunna stängas');
   console.assert(cleanSlipForSave({place:1,name:'Test'}).pier === 'A','Test: sparad plats ska behålla brygga från grundmallen');
   console.assert(Array.isArray(availableSlips()),'Test: lediga platser ska kunna rekommenderas');
+  console.assert(renderAvailableSlipOptions([{place:1,pier:'A',side:'Sida 1',status:'Ledig'}], '1', {place:1}).includes('Brygga A'),'Test: lediga platser ska grupperas per brygga');
   console.assert(Array.isArray(applications) && Array.isArray(terminations),'Test: ansökningar och uppsägningar ska vara listor');
   const merged = cloneData(defaultSlips).map(base => Object.assign({}, base, new Map([[1,{place:1,name:'Test'}]]).get(Number(base.place)) || {}));
   console.assert(merged.length === defaultSlips.length,'Test: cloud-data ska mergas med grundmallen');
