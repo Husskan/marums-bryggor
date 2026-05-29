@@ -44,6 +44,9 @@
     .page-nav{margin:0 0 12px;align-items:center}
     .page-nav button{background:white;color:var(--blue);border:1px solid var(--line)}
     .page-nav button.active{background:var(--blue);color:white;border-color:var(--blue)}
+    .page-nav button.has-new{background:#fff7ed;color:#9a3412;border-color:#fb923c;box-shadow:0 0 0 2px rgba(249,115,22,.15)}
+    .nav-badge{display:none;margin-left:6px;background:var(--warn);color:white;border-radius:999px;padding:2px 7px;font-size:12px;line-height:1;font-weight:bold}
+    .has-new .nav-badge{display:inline-flex}
     .page{display:none}
     .page.active{display:block}
     .page-stack{display:none;gap:12px}
@@ -266,6 +269,7 @@
     <button type="button" id="nav-invoice" class="admin-locked" data-admin-display="inline-flex" onclick="setActivePage('invoice')">Faktura</button>
     <button type="button" id="nav-application" onclick="setActivePage('application')">Ansökan</button>
     <button type="button" id="nav-termination" onclick="setActivePage('termination')">Uppsägning</button>
+    <button type="button" id="nav-inbox" class="admin-locked" data-admin-display="inline-flex" onclick="setActivePage('inbox')">Inkommet<span id="inboxBadge" class="nav-badge"></span></button>
     <button type="button" id="nav-settings" class="admin-locked" data-admin-display="inline-flex" onclick="setActivePage('settings')">Inställningar</button>
   </nav>
 
@@ -382,11 +386,6 @@
       </div>
       <p class="fineprint" id="applyFeedback"></p>
     </section>
-    <section class="admin-box admin-locked" data-admin-display="block">
-      <h2>Inkomna ansökningar</h2>
-      <p class="muted">Här ser ni alla nya och hanterade ansökningar om båtplats.</p>
-      <div id="applicationsList" class="request-list"></div>
-    </section>
   </section>
 
   <section id="page-termination" class="page page-stack">
@@ -406,9 +405,17 @@
       </div>
       <p class="fineprint" id="termFeedback"></p>
     </section>
-    <section class="admin-box admin-locked" data-admin-display="block">
+  </section>
+
+  <section id="page-inbox" class="page page-stack">
+    <section class="admin-box">
+      <h2>Inkomna ansökningar</h2>
+      <p class="muted">Här hamnar ansökningar när kunder fyller i formuläret.</p>
+      <div id="applicationsList" class="request-list"></div>
+    </section>
+    <section class="admin-box">
       <h2>Inkomna uppsägningar</h2>
-      <p class="muted">Här ser ni alla uppsägningar som skickats in från sidan.</p>
+      <p class="muted">Här hamnar uppsägningar när kunder fyller i formuläret.</p>
       <div id="terminationsList" class="request-list"></div>
     </section>
   </section>
@@ -866,7 +873,7 @@ function render(){
 }
 
 function setActivePage(page){
-  if(['invoice','settings'].includes(page) && !isAdmin){
+  if(['invoice','inbox','settings'].includes(page) && !isAdmin){
     alert('Logga in som administratör först.');
     page = 'overview';
   }
@@ -876,6 +883,7 @@ function setActivePage(page){
   if(page === 'overview') render();
   if(page === 'invoice') previewInvoiceTemplate();
   if(page === 'settings') fillSettingsForm();
+  updateInboxBadge();
   window.scrollTo({top:0, behavior:'smooth'});
 }
 
@@ -1667,8 +1675,29 @@ async function submitTermination(){
   document.getElementById('termFeedback').textContent = draftsOpened ? 'Uppsägningen är registrerad. Öppna och skicka mailutkasten i rutan.' : 'Uppsägningen är registrerad, men e-postadress saknas.';
 }
 
-function renderApplications(){renderRequestList(sortNewest(applications), 'applicationsList', 'application');}
-function renderTerminations(){renderRequestList(sortNewest(terminations), 'terminationsList', 'termination');}
+function inboxNewCount(){
+  return applications.filter(item => !item.handled).length + terminations.filter(item => !item.handled).length;
+}
+
+function updateInboxBadge(){
+  const nav = document.getElementById('nav-inbox');
+  const badge = document.getElementById('inboxBadge');
+  if(!nav || !badge) return;
+  const count = inboxNewCount();
+  nav.classList.toggle('has-new', isAdmin && count > 0);
+  badge.textContent = count > 99 ? '99+' : String(count);
+  badge.title = count ? `${count} nya inkomna ärenden` : '';
+}
+
+function renderApplications(){
+  renderRequestList(sortNewest(applications), 'applicationsList', 'application');
+  updateInboxBadge();
+}
+
+function renderTerminations(){
+  renderRequestList(sortNewest(terminations), 'terminationsList', 'termination');
+  updateInboxBadge();
+}
 
 async function toggleApplicationHandled(id){
   const record = applications.find(item => item.id === id);
@@ -1676,6 +1705,7 @@ async function toggleApplicationHandled(id){
   record.handled = !record.handled;
   record.status = record.handled ? 'Hanterad' : 'Ny';
   await saveApplicationRecord(record);
+  updateInboxBadge();
 }
 
 async function toggleTerminationHandled(id){
@@ -1684,6 +1714,7 @@ async function toggleTerminationHandled(id){
   record.handled = !record.handled;
   record.status = record.handled ? 'Hanterad' : 'Ny';
   await saveTerminationRecord(record);
+  updateInboxBadge();
 }
 
 function renderRequestList(list, containerId, type){
@@ -1896,6 +1927,7 @@ function runTests(){
   console.assert(terminationMailBody({name:'Test', place:'1'}).includes('uppsägning'),'Test: uppsägningsmail ska kunna skapas');
   console.assert(applicationMailDrafts({name:'Test', email:'test@example.com'}).some(draft => draft.label === 'Bekräftelse till kund'),'Test: ansökan ska skapa kundbekräftelse');
   console.assert(terminationMailDrafts({name:'Test', email:'test@example.com', place:'1'}).some(draft => draft.label === 'Bekräftelse till kund'),'Test: uppsägning ska skapa kundbekräftelse');
+  console.assert(typeof inboxNewCount === 'function','Test: inkommet-fliken ska kunna räkna nya ärenden');
   console.assert(parseAmountNumber('2 500 kr') === 2500,'Test: belopp ska kunna läsas för bokföringsunderlag');
   console.assert(typeof renderBulkInvoiceTable([]) === 'string','Test: massfakturering ska kunna förhandsvisas');
   console.assert(typeof bulkInvoiceEmailBody(buildInvoiceModel(defaultSlips[0], {amount:'1000 kr', due:'30'})) === 'string','Test: massfakturor ska kunna mailas');
@@ -1912,9 +1944,10 @@ function updateAdminView(){
     if(el.classList.contains('page')) return;
     el.style.display = isAdmin ? (el.dataset.adminDisplay || 'block') : 'none';
   });
-  if(!isAdmin && ['invoice','settings'].includes(currentPage)) setActivePage('overview');
+  if(!isAdmin && ['invoice','inbox','settings'].includes(currentPage)) setActivePage('overview');
   document.getElementById('authStatus').textContent = isAdmin ? 'Adminläge aktivt' : 'Publikt läge';
   document.getElementById('search').placeholder = isAdmin ? 'Sök plats, namn, e-post, telefon eller adress' : 'Sök plats eller namn';
+  updateInboxBadge();
   if(selected) selectSlip(selected.place, false);
 }
 
