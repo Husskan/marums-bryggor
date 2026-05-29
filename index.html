@@ -180,6 +180,11 @@
     .modal-head h2{margin:0;color:var(--blue)}
     .modal-close{background:var(--muted);min-width:42px}
     .modal-detail{line-height:1.5;margin-bottom:12px}
+    .mail-drafts{display:grid;gap:12px}
+    .mail-draft{border:1px solid #dbe2ea;border-radius:12px;background:#fbfdff;padding:12px}
+    .mail-draft textarea{font-family:Arial,Helvetica,sans-serif;min-height:160px;margin-top:8px}
+    .mail-copy{display:grid;grid-template-columns:90px 1fr;gap:5px 10px;font-size:14px;margin:8px 0}
+    .mail-copy b{color:var(--blue)}
     .public-area,.admin-area{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
     .public-box p,.admin-box p{margin:0 0 8px}
     .request-list{display:grid;gap:10px}
@@ -468,6 +473,18 @@
     </div>
   </section>
 </div>
+<div id="mailModal" class="modal-backdrop" onclick="closeMailModal(event)">
+  <section class="slip-modal" onclick="event.stopPropagation()">
+    <div class="modal-head">
+      <div>
+        <h2 id="mailModalTitle">Mail att skicka</h2>
+        <div class="muted">Öppna varje mailutkast och tryck skicka i ditt mailprogram.</div>
+      </div>
+      <button type="button" class="modal-close" onclick="closeMailModal()">Stäng</button>
+    </div>
+    <div id="mailDrafts" class="mail-drafts"></div>
+  </section>
+</div>
 <div id="printRoot" class="print-root"></div>
 
 <script type="module">
@@ -500,6 +517,7 @@ let invoiceSettings = defaultInvoiceSettings();
 let applications = [];
 let terminations = [];
 let currentPage = 'overview';
+let mailDrafts = [];
 
 function cloneData(data){return JSON.parse(JSON.stringify(data));}
 
@@ -1044,10 +1062,63 @@ function parseAmountNumber(value){
   return Number.isFinite(amount) ? amount : 0;
 }
 
-function openMailDraft(to, subject, body){
-  if(!to){alert('Det saknas e-postadress.');return false;}
-  window.location.href = 'mailto:' + encodeURIComponent(to) + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+function mailtoHref(draft){
+  return 'mailto:' + encodeURIComponent(draft.to) + '?subject=' + encodeURIComponent(draft.subject || '') + '&body=' + encodeURIComponent(draft.body || '');
+}
+
+function showMailDrafts(drafts, title='Mail att skicka'){
+  mailDrafts = drafts.filter(draft => draft && draft.to);
+  if(!mailDrafts.length){alert('Det saknas e-postadress.');return false;}
+  document.getElementById('mailModalTitle').textContent = title;
+  document.getElementById('mailDrafts').innerHTML = mailDrafts.map((draft, index) => `
+    <article class="mail-draft">
+      <h3>${escapeHtml(draft.label || `Mail ${index + 1}`)}</h3>
+      <div class="mail-copy"><b>Till</b><span>${escapeHtml(draft.to)}</span><b>Ämne</b><span>${escapeHtml(draft.subject || '')}</span></div>
+      <div class="cta-row">
+        <button type="button" class="greenbtn" onclick="openMailDraftLink(${index})">Öppna mail</button>
+        <button type="button" class="smallbtn" onclick="copyMailDraft(${index})">Kopiera text</button>
+      </div>
+      <textarea readonly>${escapeHtml(draft.body || '')}</textarea>
+    </article>
+  `).join('');
+  document.getElementById('mailModal').classList.add('active');
   return true;
+}
+
+function openMailDraft(to, subject, body, label='Mailutkast'){
+  return showMailDrafts([{to, subject, body, label}], label);
+}
+
+function openMailDrafts(drafts, title='Mail att skicka'){
+  return showMailDrafts(drafts, title);
+}
+
+function openMailDraftLink(index){
+  const draft = mailDrafts[index];
+  if(!draft) return;
+  const link = document.createElement('a');
+  link.href = mailtoHref(draft);
+  link.style.display = 'none';
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+}
+
+async function copyMailDraft(index){
+  const draft = mailDrafts[index];
+  if(!draft) return;
+  const text = [`Till: ${draft.to}`, `Ämne: ${draft.subject || ''}`, '', draft.body || ''].join('\n');
+  try{
+    await navigator.clipboard.writeText(text);
+    alert('Mailtexten är kopierad.');
+  }catch(error){
+    alert('Kopiering blockerades. Markera texten i rutan och kopiera manuellt.');
+  }
+}
+
+function closeMailModal(event){
+  if(event && event.target !== document.getElementById('mailModal')) return;
+  document.getElementById('mailModal').classList.remove('active');
 }
 
 function renderInvoicePreview(model){
@@ -1414,13 +1485,39 @@ function applicationMailBody(record){
   ].join('\n');
 }
 
-function sendApplicationToHarborMaster(record){
-  const to = invoiceSettings.harborMasterEmail || '';
-  if(!to){
-    document.getElementById('applyFeedback').textContent = 'Ansökan är sparad. Hamnkaptenens e-post är inte inställd ännu.';
-    return;
+function applicationConfirmationBody(record){
+  return [
+    `Hej ${record.name || ''},`,
+    '',
+    'Vi bekräftar att vi har tagit emot din ansökan om båtplats vid Marums bryggor.',
+    '',
+    'Hamnkaptenen återkommer när ansökan har behandlats.',
+    '',
+    'Vänliga hälsningar',
+    invoiceSettings.sender || 'Marums samfällighet'
+  ].join('\n');
+}
+
+function applicationMailDrafts(record){
+  const drafts = [];
+  const harborTo = invoiceSettings.harborMasterEmail || invoiceSettings.senderEmail || '';
+  if(harborTo){
+    drafts.push({
+      label:'Till hamnkapten',
+      to:harborTo,
+      subject:`Ny båtplatsansökan - ${record.name || 'okänd'}`,
+      body:applicationMailBody(record)
+    });
   }
-  openMailDraft(to, `Ny båtplatsansökan - ${record.name || 'okänd'}`, applicationMailBody(record));
+  if(record.email){
+    drafts.push({
+      label:'Bekräftelse till kund',
+      to:record.email,
+      subject:'Vi har tagit emot din båtplatsansökan - Marums bryggor',
+      body:applicationConfirmationBody(record)
+    });
+  }
+  return drafts;
 }
 
 function terminationMailBody(record){
@@ -1440,13 +1537,40 @@ function terminationMailBody(record){
   ].join('\n');
 }
 
-function sendTerminationToHarborMaster(record){
-  const to = invoiceSettings.harborMasterEmail || invoiceSettings.senderEmail || '';
-  if(!to){
-    document.getElementById('termFeedback').textContent = 'Uppsägningen är sparad. Hamnkaptenens e-post är inte inställd ännu.';
-    return;
+function terminationConfirmationBody(record){
+  return [
+    `Hej ${record.name || ''},`,
+    '',
+    `Vi bekräftar att vi har tagit emot din uppsägning av båtplats ${record.place || '-'}.`,
+    record.moveOutDate ? `Önskat slutdatum: ${record.moveOutDate}` : '',
+    '',
+    'Hamnkaptenen återkommer om något behöver kompletteras.',
+    '',
+    'Vänliga hälsningar',
+    invoiceSettings.sender || 'Marums samfällighet'
+  ].filter(line => line !== '').join('\n');
+}
+
+function terminationMailDrafts(record){
+  const drafts = [];
+  const harborTo = invoiceSettings.harborMasterEmail || invoiceSettings.senderEmail || '';
+  if(harborTo){
+    drafts.push({
+      label:'Till hamnkapten',
+      to:harborTo,
+      subject:`Ny uppsägning båtplats ${record.place || ''} - ${record.name || 'okänd'}`,
+      body:terminationMailBody(record)
+    });
   }
-  openMailDraft(to, `Ny uppsägning båtplats ${record.place || ''} - ${record.name || 'okänd'}`, terminationMailBody(record));
+  if(record.email){
+    drafts.push({
+      label:'Bekräftelse till kund',
+      to:record.email,
+      subject:`Vi har tagit emot din uppsägning - båtplats ${record.place || ''}`,
+      body:terminationConfirmationBody(record)
+    });
+  }
+  return drafts;
 }
 
 async function submitApplication(){
@@ -1469,9 +1593,9 @@ async function submitApplication(){
     return;
   }
   await saveApplicationRecord(record);
-  sendApplicationToHarborMaster(record);
+  const draftsOpened = openMailDrafts(applicationMailDrafts(record), 'Mail för ansökan');
   ['applyName','applyEmail','applyPhone','applyAddress','applyBoatType','applyBoatLength','applyBoatWidth','applyNote'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('applyFeedback').textContent = invoiceSettings.harborMasterEmail ? 'Ansökan är registrerad och ett mailutkast till hamnkaptenen har öppnats.' : 'Ansökan är registrerad.';
+  document.getElementById('applyFeedback').textContent = draftsOpened ? 'Ansökan är registrerad. Öppna och skicka mailutkasten i rutan.' : 'Ansökan är registrerad, men e-postadress saknas.';
 }
 
 async function submitTermination(){
@@ -1492,9 +1616,9 @@ async function submitTermination(){
     return;
   }
   await saveTerminationRecord(record);
-  sendTerminationToHarborMaster(record);
+  const draftsOpened = openMailDrafts(terminationMailDrafts(record), 'Mail för uppsägning');
   ['termName','termEmail','termPhone','termPlace','termMoveOutDate','termReason'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('termFeedback').textContent = invoiceSettings.harborMasterEmail ? 'Uppsägningen är registrerad och ett mailutkast till hamnkaptenen har öppnats.' : 'Uppsägningen är skickad och registrerad.';
+  document.getElementById('termFeedback').textContent = draftsOpened ? 'Uppsägningen är registrerad. Öppna och skicka mailutkasten i rutan.' : 'Uppsägningen är registrerad, men e-postadress saknas.';
 }
 
 function renderApplications(){renderRequestList(sortNewest(applications), 'applicationsList', 'application');}
@@ -1724,6 +1848,8 @@ function runTests(){
   console.assert(isInvoiceSentForCurrentYear({invoiceSent:true, invoiceSentYear:currentInvoiceYear()}) === true,'Test: fakturamarkering gäller aktuellt år');
   console.assert(applicationMailBody({name:'Test', email:'test@example.com'}).includes('test@example.com'),'Test: ansökningsmail ska innehålla e-post');
   console.assert(terminationMailBody({name:'Test', place:'1'}).includes('uppsägning'),'Test: uppsägningsmail ska kunna skapas');
+  console.assert(applicationMailDrafts({name:'Test', email:'test@example.com'}).some(draft => draft.label === 'Bekräftelse till kund'),'Test: ansökan ska skapa kundbekräftelse');
+  console.assert(terminationMailDrafts({name:'Test', email:'test@example.com', place:'1'}).some(draft => draft.label === 'Bekräftelse till kund'),'Test: uppsägning ska skapa kundbekräftelse');
   console.assert(parseAmountNumber('2 500 kr') === 2500,'Test: belopp ska kunna läsas för bokföringsunderlag');
   console.assert(typeof renderBulkInvoiceTable([]) === 'string','Test: massfakturering ska kunna förhandsvisas');
   console.assert(typeof bulkInvoiceEmailBody(buildInvoiceModel(defaultSlips[0], {amount:'1000 kr', due:'30'})) === 'string','Test: massfakturor ska kunna mailas');
@@ -1784,6 +1910,9 @@ Object.assign(window, {
   adminLogout,
   setActivePage,
   closeSlipModal,
+  closeMailModal,
+  openMailDraftLink,
+  copyMailDraft,
   saveSelected,
   clearInvoiceMarker,
   sendInvoiceEmail,
