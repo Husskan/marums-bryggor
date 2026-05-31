@@ -282,6 +282,7 @@
         <option>A</option>
         <option>B</option>
         <option>C</option>
+        <option>D</option>
       </select>
       <select id="statusFilter">
         <option value="">Alla statusar</option>
@@ -545,7 +546,9 @@ const defaultSlips = [
   ...[[136,'Nylander'],[134,'von Dahn'],[132,'Arveklint'],[130,'Alvares'],[128,'Kihlmark W'],[126,'Nn'],[124,'Broné'],[122,'nn'],[120,'Ahlström E'],[118,'Abramoff P'],[116,'Örberg D'],[114,'Björkengren P'],[112,'Larsson C'],[110,'Åberg C-G'],[108,'Waldenström'],[106,'Nilsson M+D'],[104,'Nn'],[102,'Nn']].map(x=>makeSlot('B','Sida 1',x[0],x[1],/^n+$/i.test(x[1])?'Okänd':'Uthyrd')),
   ...[[135,'Holmgren W'],[133,'Borgert-Palm'],[131,'Tonysson K'],[129,'Berglund C'],[127,'Sundin'],[125,'Elving M+A'],[123,'Bornhäll Pettersson'],[121,'Staaf H'],[119,'Cohrs'],[117,'Hellman'],[115,'Kihlmark'],[113,'Mellander J'],[111,'Söderström'],[109,'Gribbe'],[107,'Viberg C'],[105,'Boman V'],[103,'nn'],[101,'Hamnbåt']].map(x=>makeSlot('B','Sida 2',x[0],x[1],/^n+$/i.test(x[1])?'Okänd':'Uthyrd')),
   ...[[232,'Lind T'],[230,'Theler M'],[228,'Rudberg'],[226,'Nn'],[224,'Ericson M'],[222,'Tronje'],[220,'Blom I'],[218,'Gustavsson L'],[216,'Lindgren M'],[214,'Eriksson L'],[212,'Jansson M'],[210,'Thorsberg L'],[208,'Eskemyr'],[206,'Nn'],[204,'Nn'],[202,'Ask M']].map(x=>makeSlot('C','Sida 2',x[0],x[1],/^n+$/i.test(x[1])?'Okänd':'Uthyrd')),
-  ...[[231,'Morger'],[229,'Wall'],[227,'Sandin C'],[225,'C Tjernström'],[223,'Nn'],[221,'Klaric'],[219,'Jönsson M'],[217,'Gardelli T'],[215,'Alm E+A'],[213,'Ask M'],[211,'H stjernberg'],[209,'Askehov'],[207,'Nn'],[205,'Nn'],[203,'NN'],[201,'nn']].map(x=>makeSlot('C','Sida 1',x[0],x[1],/^n+$/i.test(x[1])?'Okänd':'Uthyrd'))
+  ...[[231,'Morger'],[229,'Wall'],[227,'Sandin C'],[225,'C Tjernström'],[223,'Nn'],[221,'Klaric'],[219,'Jönsson M'],[217,'Gardelli T'],[215,'Alm E+A'],[213,'Ask M'],[211,'H stjernberg'],[209,'Askehov'],[207,'Nn'],[205,'Nn'],[203,'NN'],[201,'nn']].map(x=>makeSlot('C','Sida 1',x[0],x[1],/^n+$/i.test(x[1])?'Okänd':'Uthyrd')),
+  ...[[310,''],[308,''],[306,''],[304,''],[302,'']].map(x=>makeSlot('D','Sida 1',x[0],x[1],'Okänd')),
+  ...[[309,''],[307,''],[305,''],[303,''],[301,'']].map(x=>makeSlot('D','Sida 2',x[0],x[1],'Okänd'))
 ];
 
 function defaultInvoiceSettings(){
@@ -906,7 +909,7 @@ function render(){
   const q = document.getElementById('search').value.toLowerCase();
   const pf = document.getElementById('pierFilter').value;
   const sf = document.getElementById('statusFilter').value;
-  ['A','B','C'].forEach(p => {
+  ['A','B','C','D'].forEach(p => {
     if(pf && pf !== p) return;
     const arr = slips.filter(s => {
       const publicFields = [s.place,s.name,s.status,s.pier,s.side];
@@ -2015,8 +2018,13 @@ function runTests(){
   console.assert(defaultSlips.some(s=>s.pier==='C'&&s.place===201),'Test: Brygga C ska innehålla plats 201');
   console.assert(defaultSlips.some(s=>s.pier==='C'&&s.place===232),'Test: Brygga C ska innehålla plats 232');
   console.assert(defaultSlips.filter(s=>s.pier==='C').length===32,'Test: Brygga C ska ha 32 platser');
+  console.assert(defaultSlips.some(s=>s.pier==='D'&&s.place===301),'Test: Brygga D ska innehålla plats 301');
+  console.assert(defaultSlips.some(s=>s.pier==='D'&&s.place===310),'Test: Brygga D ska innehålla plats 310');
+  console.assert(defaultSlips.filter(s=>s.pier==='D').length===10,'Test: Brygga D ska ha 10 platser');
   console.assert(defaultSlips.find(s=>s.place===201).side==='Sida 1','Test: 201 ska vara på Sida 1');
   console.assert(defaultSlips.find(s=>s.place===202).side==='Sida 2','Test: 202 ska vara på Sida 2');
+  console.assert(defaultSlips.find(s=>s.place===310).side==='Sida 1','Test: 310 ska vara på Sida 1');
+  console.assert(defaultSlips.find(s=>s.place===309).side==='Sida 2','Test: 309 ska vara på Sida 2');
   console.assert(defaultSlips.find(s=>s.place===37).name==='Gyllfeldt R','Test: uppdaterad A-lista ska innehålla plats 37');
   console.assert(defaultSlips.find(s=>s.place===116).name==='Örberg D','Test: uppdaterad B-lista ska innehålla plats 116');
   console.assert(defaultSlips.find(s=>s.place===232).name==='Lind T','Test: uppdaterad C-lista ska innehålla plats 232');
