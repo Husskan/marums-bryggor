@@ -1601,9 +1601,11 @@ function downloadData(){
 }
 
 function renderPierNoticePage(pier, pierSlips){
-  const sorted = pierSlips.slice().sort((a,b) => Number(b.place) - Number(a.place));
-  const half = Math.ceil(sorted.length / 2);
-  const columns = [sorted.slice(0, half), sorted.slice(half)];
+  const sides = ['Sida 1','Sida 2'];
+  const columns = sides.map(side => pierSlips
+    .filter(slip => slip.side === side)
+    .slice()
+    .sort((a,b) => Number(b.place) - Number(a.place)));
   const columnHtml = columns.map(column => `
     <table>
       <thead><tr><th>Plats</th><th>Namn</th></tr></thead>
@@ -2082,6 +2084,7 @@ function runTests(){
   console.assert(defaultSlips.find(s=>s.place===116).name==='Örberg D','Test: uppdaterad B-lista ska innehålla plats 116');
   console.assert(defaultSlips.find(s=>s.place===232).name==='Lind T','Test: uppdaterad C-lista ska innehålla plats 232');
   console.assert(renderPierNoticePage('A', defaultSlips.filter(s=>s.pier==='A')).includes('Brygga A'),'Test: anslagslista ska kunna skapas per brygga');
+  console.assert(renderPierNoticePage('A', defaultSlips.filter(s=>s.pier==='A')).indexOf('<td>36</td>') < renderPierNoticePage('A', defaultSlips.filter(s=>s.pier==='A')).indexOf('<td>37</td>'),'Test: anslagslistan ska följa bryggans sidor');
   console.assert(Object.prototype.hasOwnProperty.call(defaultSlips[0], 'phone'),'Test: båtplats ska ha telefonfält');
   console.assert(buildInvoiceModel(defaultSlips[0], { amount:'1000 kr', due:'30' }).invoiceNumber.includes('MB'),'Test: fakturanummer ska skapas');
   console.assert(applyInvoiceTemplate('Telefon {telefon}', Object.assign({}, defaultSlips[0], { phone:'0701234567' }), '1000 kr', '2026-06-30', 'MB-1', '2026-05-27').includes('0701234567'),'Test: fakturamall ska kunna skriva ut telefonnummer');
