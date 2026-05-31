@@ -77,8 +77,8 @@
     .land{position:absolute;left:0;top:0;width:190px;height:100%;background:#d9ead3;border-right:8px solid #b7a17a}
     .road{position:absolute;left:38px;top:0;width:68px;height:100%;background:#d1d5db;transform:skewX(-10deg);opacity:.9}
     .label-land{position:absolute;left:25px;top:30px;font-weight:bold;color:#365314}
-    .pier{position:relative;margin-left:190px;margin-bottom:50px;min-width:0;max-width:100%}
-    .pier-row{display:grid;gap:6px}
+    .pier{position:relative;margin-left:190px;margin-bottom:50px;min-width:0;max-width:max-content}
+    .pier-row{display:grid;gap:6px;width:max-content;max-width:100%}
     .side{display:flex;gap:5px;align-items:center;min-width:0}
     .dock{height:30px;background:linear-gradient(#9b7a4d,#755734);border:2px solid var(--dock-dark);border-radius:7px;position:relative;margin:6px 0;width:100%}
     .dock:before{content:"";position:absolute;left:-62px;top:11px;width:62px;height:12px;background:#8a6a42;border-radius:4px}
