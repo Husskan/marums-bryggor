@@ -82,6 +82,11 @@
     .side{display:flex;gap:5px;align-items:center;min-width:0}
     .dock{height:30px;background:linear-gradient(#9b7a4d,#755734);border:2px solid var(--dock-dark);border-radius:7px;position:relative;margin:6px 0;width:100%}
     .dock:before{content:"";position:absolute;left:-62px;top:11px;width:62px;height:12px;background:#8a6a42;border-radius:4px}
+    .pier-d{display:grid;grid-template-columns:34px max-content;gap:10px;align-items:start;width:max-content;margin-top:10px}
+    .pier-d .pier-label{top:10px;transform:none}
+    .pier-d-dock{width:34px;min-height:620px;background:linear-gradient(90deg,#9b7a4d,#755734);border:2px solid var(--dock-dark);border-radius:8px;position:relative}
+    .pier-d-dock:before{content:"";position:absolute;left:-62px;top:16px;width:62px;height:12px;background:#8a6a42;border-radius:4px}
+    .pier-d-slips{display:grid;grid-template-columns:30px;gap:7px;margin-top:4px}
     .pier-label{
       position:absolute;
       left:-150px;
@@ -236,6 +241,7 @@
       .road{left:26px;width:88px}
       .label-land{top:18px}
       .pier{margin-left:0;min-width:max-content;padding-left:104px}
+      .pier-d{grid-template-columns:34px max-content}
       .slip{width:30px;height:56px}
       .dock:before{width:55px;left:-55px}
       .pier-label{left:0;top:-18px;transform:none;font-size:14px}
@@ -906,6 +912,13 @@ function renderPierC(pier, arr){
   }
 }
 
+function renderPierD(pier, arr){
+  pier.classList.add('pier-d');
+  pier.innerHTML = '<div class="pier-label">Brygga D</div><div class="pier-d-dock"></div><div class="pier-d-slips"></div>';
+  const slipsEl = pier.querySelector('.pier-d-slips');
+  arr.slice().sort((a,b)=>Number(b.place)-Number(a.place)).forEach(s => slipsEl.appendChild(makeSlipEl(s,false)));
+}
+
 function render(){
   const map = document.getElementById('map');
   map.querySelectorAll('.pier').forEach(el => el.remove());
@@ -925,7 +938,9 @@ function render(){
     pier.className = 'pier';
     pier.innerHTML = '<div class="pier-label">Brygga ' + p + '</div><div class="pier-row"><div class="side topSide"></div><div class="dock"></div><div class="side bottom bottomSide"></div></div>';
     map.appendChild(pier);
-    p === 'C' ? renderPierC(pier, arr) : renderNormalPier(pier, arr);
+    if(p === 'C') renderPierC(pier, arr);
+    else if(p === 'D') renderPierD(pier, arr);
+    else renderNormalPier(pier, arr);
   });
 }
 
@@ -2062,6 +2077,7 @@ function runTests(){
   console.assert(defaultSlips.find(s=>s.place===202).side==='Sida 2','Test: 202 ska vara på Sida 2');
   console.assert(defaultSlips.find(s=>s.place===310).side==='Sida 1','Test: 310 ska vara på Sida 1');
   console.assert(defaultSlips.find(s=>s.place===309).side==='Sida 2','Test: 309 ska vara på Sida 2');
+  console.assert(typeof renderPierD === 'function','Test: Brygga D ska ha egen lodrät rendering');
   console.assert(defaultSlips.find(s=>s.place===37).name==='Gyllfeldt R','Test: uppdaterad A-lista ska innehålla plats 37');
   console.assert(defaultSlips.find(s=>s.place===116).name==='Örberg D','Test: uppdaterad B-lista ska innehålla plats 116');
   console.assert(defaultSlips.find(s=>s.place===232).name==='Lind T','Test: uppdaterad C-lista ska innehålla plats 232');
