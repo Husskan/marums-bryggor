@@ -317,6 +317,9 @@
           <div class="tag"><span class="box" style="background:#fff0a8"></span>Gästplats</div>
           <div class="tag"><span class="box" style="background:#e5e7eb"></span>Ej tillgänglig</div>
         </div>
+        <div class="admin-locked cta-row" data-admin-display="flex" style="margin-top:12px">
+          <button type="button" class="smallbtn" onclick="printPierNoticeList()">Skriv ut anslagslistor</button>
+        </div>
 
       </aside>
     </div>
@@ -1582,6 +1585,40 @@ function downloadData(){
   a.click();
 }
 
+function renderPierNoticePage(pier, pierSlips){
+  const sorted = pierSlips.slice().sort((a,b) => Number(b.place) - Number(a.place));
+  const half = Math.ceil(sorted.length / 2);
+  const columns = [sorted.slice(0, half), sorted.slice(half)];
+  const columnHtml = columns.map(column => `
+    <table>
+      <thead><tr><th>Plats</th><th>Namn</th></tr></thead>
+      <tbody>
+        ${column.map(slip => `<tr><td>${escapeHtml(String(slip.place))}</td><td>${escapeHtml(slip.name || '')}</td></tr>`).join('')}
+      </tbody>
+    </table>
+  `).join('');
+  return `<section class="notice-page"><h1>Brygga ${escapeHtml(pier)}</h1><div class="notice-columns">${columnHtml}</div></section>`;
+}
+
+function printPierNoticeList(){
+  if(!isAdmin){alert('Logga in som administratör först.');return;}
+  const piers = Array.from(new Set(slips.map(slip => slip.pier))).sort((a,b) => String(a).localeCompare(String(b)));
+  const pages = piers.map(pier => renderPierNoticePage(pier, slips.filter(slip => slip.pier === pier))).join('');
+  const styles = `
+    <style>
+      .notice-page{width:210mm;min-height:297mm;padding:16mm 18mm;background:white;color:#111827;font-family:Arial,Helvetica,sans-serif;page-break-after:always}
+      .notice-page h1{font-size:28px;margin:0 0 10mm;border-bottom:2px solid #111827;padding-bottom:3mm;color:#111827}
+      .notice-columns{display:grid;grid-template-columns:1fr 1fr;gap:18mm}
+      .notice-page table{width:100%;border-collapse:collapse;font-size:18px}
+      .notice-page th{font-size:17px;text-align:left;border-bottom:2px solid #111827;padding:2mm 1mm}
+      .notice-page td{border-bottom:1px solid #d1d5db;padding:2.2mm 1mm;vertical-align:top}
+      .notice-page td:first-child,.notice-page th:first-child{width:24mm;text-align:right;padding-right:5mm}
+      @page{size:A4 portrait;margin:0}
+    </style>
+  `;
+  printInsideApp(styles + pages);
+}
+
 async function resetData(){
   if(!isAdmin){alert('Logga in som administratör först.');return;}
   if(!confirm('Återställa till grundmallen?')) return;
@@ -2028,6 +2065,7 @@ function runTests(){
   console.assert(defaultSlips.find(s=>s.place===37).name==='Gyllfeldt R','Test: uppdaterad A-lista ska innehålla plats 37');
   console.assert(defaultSlips.find(s=>s.place===116).name==='Örberg D','Test: uppdaterad B-lista ska innehålla plats 116');
   console.assert(defaultSlips.find(s=>s.place===232).name==='Lind T','Test: uppdaterad C-lista ska innehålla plats 232');
+  console.assert(renderPierNoticePage('A', defaultSlips.filter(s=>s.pier==='A')).includes('Brygga A'),'Test: anslagslista ska kunna skapas per brygga');
   console.assert(Object.prototype.hasOwnProperty.call(defaultSlips[0], 'phone'),'Test: båtplats ska ha telefonfält');
   console.assert(buildInvoiceModel(defaultSlips[0], { amount:'1000 kr', due:'30' }).invoiceNumber.includes('MB'),'Test: fakturanummer ska skapas');
   console.assert(applyInvoiceTemplate('Telefon {telefon}', Object.assign({}, defaultSlips[0], { phone:'0701234567' }), '1000 kr', '2026-06-30', 'MB-1', '2026-05-27').includes('0701234567'),'Test: fakturamall ska kunna skriva ut telefonnummer');
@@ -2127,6 +2165,7 @@ Object.assign(window, {
   markBulkInvoicesSent,
   downloadInvoiceCsv,
   downloadData,
+  printPierNoticeList,
   resetData,
   saveInvoiceSettings,
   saveAdminSettings,
